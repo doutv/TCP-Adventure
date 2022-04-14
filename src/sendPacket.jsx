@@ -18,18 +18,18 @@ const SendPacket = (props) => {
   return (
     <div className="send-packet">
       <RefPacket {...props} />
-      <Button
+      <Button className="send-btn"
         onClick={() => {
           const sourcePort = $(".send-packet #source-port")[0].value;
-          const seqNumber = $(".send-packet #seq-number")[0].value;
-          const destinationPort = $(".send-packet #destination-port")[0].value;
-          const ackNumber = $(".send-packet #ack-number")[0].value;
+          const sequenceNumber = $(".send-packet #seq-number")[0].value;
+          const DestinationPort = $(".send-packet #destination-port")[0].value;
+          const AckNumber = $(".send-packet #ack-number")[0].value;
           const ACK = $(".send-packet #ACK")[0].value;
           const SYN = $(".send-packet #SYN")[0].value;
           const FIN = $(".send-packet #FIN")[0].value;
           let isSuccess = true;
 
-          if (ackNumber != correctCheck.ackNumber) {
+          if (AckNumber != correctCheck.AckNumber) {
               isSuccess = false;
             notification.error({
               message: "Send Packet Error:",
@@ -62,6 +62,10 @@ const SendPacket = (props) => {
                   message: "Send Packet Success",
                   description: "..."
               })
+
+              props.setHistoryMes([...props.historyMes, {
+                  sourcePort, DestinationPort, sequenceNumber, AckNumber, ACK, FIN, SYN, isClientMes: false
+              }])
           }
         }}
       >

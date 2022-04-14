@@ -29,6 +29,8 @@ function App() {
 
   const [clientMes, setClientMes] = React.useState([]);
   const [serverMes, setServerMes] = React.useState([]);
+  const [historyMes, setHistoryMes] = React.useState([]);
+  const [sendPacketVisible, setSendPacketVisible] = React.useState(false)
   const closeInfoModal = (e) => {
     changeState(stateConfig.ThreeHandShakeState); // initialize the game state
     setShowInfoModal(false); // close the modal
@@ -55,26 +57,9 @@ function App() {
             resolve();
           })
             .then(() => {
-              setClientMes([
-                ...clientMes,
-                <BasePacket {...firstThreeWayHandShake}/>,
-              ]);
-              setServerMes([
-                ...serverMes,
-                <SendPacket
-                  sourcePort={serverPort}
-                  DestinationPort={clientPort}
-                  correctCheck = {{
-                    "ackNumber": clientSeq + 1,
-                    "ACK": "1",
-                    "SYN": "1",
-                    "FIN": "0"
-                  }}
-                  // clientSeqNumber = {clientSeq}
-                  sequenceNumber={serverSeq}
-                  inputDisable={false}
-                />,
-              ]);
+              setHistoryMes([...historyMes, {...firstThreeWayHandShake, isClientMes: true}])
+              setTimeout(() =>setSendPacketVisible(true), 1000)
+              
             })
             .catch((e) => console.log(e));
         },
@@ -104,14 +89,27 @@ function App() {
         {...stateConfig}
       />
 
-      <Row gutter={[16, 16]} className="container">
-        <Col span={12} className="info-container client-message">
-          {clientMes}
-        </Col>
-        <Col span={12} className="info-container server-message">
-          {serverMes}
-        </Col>
-      </Row>
+      <div className="container">
+        <div className="info-container client-message">
+          {historyMes.map((ele)=><BasePacket {...ele} inputDisable={true}/>)}
+        </div>
+      {sendPacketVisible? 
+        <SendPacket
+                  sourcePort={serverPort}
+                  DestinationPort={clientPort}
+                  correctCheck = {{
+                    "AckNumber": clientSeq + 1,
+                    "ACK": "1",
+                    "SYN": "1",
+                    "FIN": "0"
+                  }}
+                  historyMes= {historyMes}
+                  setHistoryMes = {setHistoryMes}
+                  sequenceNumber={serverSeq}
+                  inputDisable={false}
+        />: ''
+                }
+      </div>
     </div>
   );
 }

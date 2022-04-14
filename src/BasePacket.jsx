@@ -23,6 +23,7 @@ const BasePacket = (props) => {
   const [DestinationPort, setDestinationProt] = React.useState(
     props.DestinationPort
   );
+
   const [sequenceNumber, setSequenceNumber] = React.useState(
     props.sequenceNumber
   );
@@ -30,11 +31,11 @@ const BasePacket = (props) => {
   const [ACK, setACK] = React.useState(props.ACK);
   const [SYN, setSYN] = React.useState(props.SYN);
   const [FIN, setFIN] = React.useState(props.FIN);
-    
+    const position = props.isClientMes? "flex-start": "flex-end";
   return (
     <div
       className="packet"
-      style={{ border: "solid 2px black", padding: "4px 0" }}
+      style={{ border: "solid 2px black",borderRadius:"10px", padding: "4px 0", width: "45%", alignSelf: position}}
     >
       <Row gutter={[8, 8]}>
         <Col span={12}>
