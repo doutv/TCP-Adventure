@@ -1,3 +1,5 @@
+@import '~antd/dist/antd.css';
+
 .App {
   text-align: center;
 }
@@ -35,4 +37,64 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.info-container {
+  height: 100%; 
+  background-color: #e7e7e7;
+  padding: 10px;
+  border: 10px solid white;
+}
+
+.ant-row.container {
+  position: absolute;
+    left: 10px;
+    top: 70px;
+    right: 10px;
+    bottom: 10px;
+}
+.packet .ant-tag{
+  align-self: center;
+}
+
+.packet .ant-row {
+  padding: 0 10px;
+}
+
+.client-message .packet  {
+  animation-duration: 1s;
+  animation-name: slideinLeft;
+}
+
+@keyframes slideinLeft {
+  from {
+    margin-right: 100%;
+    width: -300%;
+  }
+
+  to {
+    margin-right: 0;
+    width: -100%;
+  }
+}
+.server-message .packet  {
+  animation-duration: 3s;
+  animation-name: slideinRight;
+}
+
+@keyframes slideinRight {
+  from {
+    margin-left: 100%;
+    width: 300%;
+  }
+
+  to {
+    margin-left: 0%;
+    width: 100%;
+  }
+}
+
+.ant-btn {
+  margin: 7px; 
+
 }
