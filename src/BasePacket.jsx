@@ -17,12 +17,12 @@ const PackBox = (props) => {
   );
 };
 
-const Divider =()=> <div style={{ border: "solid", margin: "4px 0" }}></div>;
+const Divider = () => <div style={{ border: "solid", margin: "4px 0" }}></div>;
 const BasePacket = (props) => {
   const { inputDisable } = props;
   const [sourcePort, setSourceProt] = React.useState(props.sourcePort);
-  const [DestinationPort, setDestinationProt] = React.useState(
-    props.DestinationPort
+  const [destinationPort, setDestinationProt] = React.useState(
+    props.destinationPort
   );
 
   const [sequenceNumber, setSequenceNumber] = React.useState(
@@ -56,7 +56,7 @@ const BasePacket = (props) => {
           <PackBox
             name={"Destination Port"}
             inputDisable={inputDisable}
-            value={DestinationPort}
+            value={destinationPort}
             setValue={setDestinationProt}
             id="destination-port"
           />
@@ -115,7 +115,7 @@ const BasePacket = (props) => {
           />
         </Col>
       </Row>
-      {props.data?<Divider />: ""}
+      {props.data ? <Divider /> : ""}
       {props.data ? (
         <Row>
           <PackBox

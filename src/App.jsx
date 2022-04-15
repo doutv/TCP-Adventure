@@ -40,7 +40,7 @@ function App() {
   const [sendPacketVisible, setSendPacketVisible] = React.useState(false);
   let clientPacketConfig = {
     sourcePort: clientPort,
-    DestinationPort: serverPort,
+    destinationPort: serverPort,
     sequenceNumber: INIT_CLIENT_SEQ,
     AckNumber: 0,
     ACK: 0,
@@ -51,7 +51,7 @@ function App() {
   };
   let serverPacketConfig = {
     sourcePort: serverPort,
-    DestinationPort: clientPort,
+    destinationPort: clientPort,
     sequenceNumber: INIT_SERVER_SEQ,
     AckNumber: INIT_CLIENT_SEQ + 1,
     ACK: 1,
@@ -192,7 +192,7 @@ function App() {
       {/* TODO: Complete Background Information on Modal, showing at the beginning of the game */}
       <Modal
         closable={false}
-        cancelText={() => {}}
+        cancelText={() => { }}
         onOk={closeInfoModal}
         visible={showInfoModal}
         title="Welcome to TCP Game Tutorial!"
@@ -241,7 +241,7 @@ function App() {
         {sendPacketVisible ? (
           <SendPacket
             sourcePort={serverPort}
-            DestinationPort={clientPort}
+            destinationPort={clientPort}
             correctCheck={serverPackConfigs[timer]}
             historyMes={historyMes}
             setHistoryMes={setHistoryMes}

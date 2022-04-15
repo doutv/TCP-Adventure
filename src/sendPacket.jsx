@@ -15,7 +15,7 @@ const SendPacket = (props) => {
     AckNumberError: "ACKNOWLEDGE NUMBER ERROR",
     sourcePortError: "SOURCE PORT ERROR",
     sequenceNumberError: "SEQUENCE NUMBER ERROR",
-    DestinationPortError: "DESTINATION PORT ERROR",
+    destinationPortError: "DESTINATION PORT ERROR",
   };
   return (
     <div className="send-packet">
@@ -25,7 +25,7 @@ const SendPacket = (props) => {
         onClick={() => {
           const sourcePort = parseInt($(".send-packet #source-port")[0].value);
           const sequenceNumber = parseInt($(".send-packet #seq-number")[0].value);
-          const DestinationPort = parseInt($(".send-packet #destination-port")[0].value);
+          const destinationPort = parseInt($(".send-packet #destination-port")[0].value);
           const AckNumber = parseInt($(".send-packet #ack-number")[0].value);
           const ACK = parseInt($(".send-packet #ACK")[0].value);
           const SYN = parseInt($(".send-packet #SYN")[0].value);
@@ -38,11 +38,11 @@ const SendPacket = (props) => {
               description: Error.sourcePortError,
             });
           }
-          if (DestinationPort !== correctCheck.DestinationPort) {
+          if (destinationPort !== correctCheck.destinationPort) {
             isSuccess = false;
             notification.error({
               message: "Send Packet Error:",
-              description: Error.DestinationPortError,
+              description: Error.destinationPortError,
             });
           }
           if (sequenceNumber !== correctCheck.sequenceNumber) {
@@ -90,7 +90,7 @@ const SendPacket = (props) => {
               ...props.historyMes,
               {
                 sourcePort,
-                DestinationPort,
+                destinationPort,
                 sequenceNumber,
                 AckNumber,
                 ACK,
