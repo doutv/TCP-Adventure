@@ -109,7 +109,8 @@ function App() {
           title: "Receive Data ...",
           content: data,
           okText: "Receive Data",
-          cancelText: "",
+          cancelText: () => {},
+          cancelButtonProps: { htmlType: "" },
           closable: false,
           onOk() {
             return new Promise((resolve, reject) => {
@@ -118,6 +119,7 @@ function App() {
               .then(() => {
                 setTimeout(() => {
                   sendPackets.push(clientPackConfigs[2]);
+                  setState(stateConfig.FourHandShakeState);
                   setHistoryMes([...historyMes, ...sendPackets]);
                   setTimeout(() => {
                     sendPackets.push(clientPackConfigs[3]);
@@ -135,6 +137,7 @@ function App() {
         message: true,
         content: <div className="connect-done">Closed!</div>,
       };
+      setState(stateConfig.Finished);
       setHistoryMes([
         ...historyMes,
         clientPackConfigs[4],
@@ -176,6 +179,7 @@ function App() {
         icon: null,
         title: "You Received a handshake packet",
         content: <BasePacket {...clientPackConfigs[0]} />,
+        cancelText: () => {},
         onOk() {
           return new Promise((resolve, reject) => {
             // setClientSeq(INIT_CLIENT_SEQ);
