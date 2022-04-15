@@ -66,6 +66,8 @@ const SendPacket = (props) => {
               props.setHistoryMes([...props.historyMes, {
                   sourcePort, DestinationPort, sequenceNumber, AckNumber, ACK, FIN, SYN, isClientMes: false
               }])
+            const tmpClientSeq = props.clientSeq + 1;
+            props.setClientSeq(tmpClientSeq)
           }
         }}
       >

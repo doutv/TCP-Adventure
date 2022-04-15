@@ -136,3 +136,11 @@
   width: 100% !important;
 
 }
+
+.connect-done {
+  border-radius: 10px;
+  border: black solid 2px;
+  margin: 10px;
+  font-size: 20px;
+  background: white;
+}
