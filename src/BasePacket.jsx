@@ -9,7 +9,7 @@ const PackBox = (props) => {
         disabled={props.inputDisable}
         value={props.value}
         onChange={(e) => {
-        //   console.log(e);
+          //   console.log(e);
           props.setValue(e.target.value);
         }}
       />
@@ -17,6 +17,7 @@ const PackBox = (props) => {
   );
 };
 
+const Divider =()=> <div style={{ border: "solid", margin: "4px 0" }}></div>;
 const BasePacket = (props) => {
   const { inputDisable } = props;
   const [sourcePort, setSourceProt] = React.useState(props.sourcePort);
@@ -31,11 +32,15 @@ const BasePacket = (props) => {
   const [ACK, setACK] = React.useState(props.ACK);
   const [SYN, setSYN] = React.useState(props.SYN);
   const [FIN, setFIN] = React.useState(props.FIN);
-    const position = props.isClientMes? "flex-start": "flex-end";
   return (
     <div
       className="packet"
-      style={{ border: "solid 2px black",borderRadius:"10px", padding: "4px 0", width: "45%", alignSelf: position}}
+      style={{
+        border: "solid 2px black",
+        borderRadius: "10px",
+        padding: "4px 0",
+        // width: "45%",
+      }}
     >
       <Row gutter={[8, 8]}>
         <Col span={12}>
@@ -44,7 +49,7 @@ const BasePacket = (props) => {
             inputDisable={inputDisable}
             value={sourcePort}
             setValue={setSourceProt}
-            id = {"source-port"}
+            id={"source-port"}
           />
         </Col>
         <Col span={12}>
@@ -53,21 +58,21 @@ const BasePacket = (props) => {
             inputDisable={inputDisable}
             value={DestinationPort}
             setValue={setDestinationProt}
-            id = "destination-port"
+            id="destination-port"
           />
         </Col>
       </Row>
-      <div style={{ border: "solid", margin: "4px 0" }}></div>
+      <Divider />
       <Row>
         <PackBox
           name={"Sequence Number"}
           inputDisable={inputDisable}
           value={sequenceNumber}
           setValue={setSequenceNumber}
-          id = "seq-number"
+          id="seq-number"
         />
       </Row>
-      <div style={{ border: "solid", margin: "4px 0" }}></div>
+      <Divider />
 
       <Row>
         <PackBox
@@ -75,10 +80,10 @@ const BasePacket = (props) => {
           inputDisable={inputDisable}
           value={AckNumber}
           setValue={setAckNumber}
-          id = "ack-number"
+          id="ack-number"
         />
       </Row>
-      <div style={{ border: "solid", margin: "4px 0" }}></div>
+      <Divider />
 
       <Row gutter={[16, 16]}>
         <Col span={8}>
@@ -88,7 +93,7 @@ const BasePacket = (props) => {
             inputDisable={inputDisable}
             value={ACK}
             setValue={setACK}
-            id = "ACK"
+            id="ACK"
           />
         </Col>
         <Col span={8}>
@@ -97,7 +102,7 @@ const BasePacket = (props) => {
             inputDisable={inputDisable}
             value={SYN}
             setValue={setSYN}
-            id = "SYN"
+            id="SYN"
           />
         </Col>
         <Col span={8}>
@@ -106,10 +111,23 @@ const BasePacket = (props) => {
             inputDisable={inputDisable}
             value={FIN}
             setValue={setFIN}
-            id = "FIN"
+            id="FIN"
           />
         </Col>
       </Row>
+      {props.data?<Divider />: ""}
+      {props.data ? (
+        <Row>
+          <PackBox
+            name="DATA"
+            id="data"
+            value={props.data}
+            inputDisable={inputDisable}
+          />
+        </Row>
+      ) : (
+        ""
+      )}
     </div>
   );
 };

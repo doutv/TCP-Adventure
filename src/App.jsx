@@ -1,7 +1,7 @@
 import "./App.css";
 import StateHeader from "./StateHeader";
 import React from "react";
-import { Modal} from "antd";
+import { Modal } from "antd";
 import BasePacket from "./BasePacket";
 import SendPacket from "./sendPacket";
 function getRandomNumber(max) {
@@ -11,7 +11,7 @@ const clientPort = 3280;
 const serverPort = 1314;
 const INIT_CLIENT_SEQ = getRandomNumber(1e5);
 const INIT_SERVER_SEQ = getRandomNumber(1e5);
-
+const INIT_TIMER = 0;
 const StateHeaderRef = React.forwardRef(StateHeader);
 function App() {
   const stateConfig = {
@@ -25,66 +25,148 @@ function App() {
   const [state, setState] = React.useState(stateConfig.ThreeHandShakeState);
   const stateRef = React.useRef(null);
   const [showInfoModal, setShowInfoModal] = React.useState(true);
-  React.useEffect(() => {}, []);
 
   const changeState = (newState) => stateRef.current.changeState(newState);
 
-  // const [clientMes, setClientMes] = React.useState([]);
-  // const [serverMes, setServerMes] = React.useState([]);
+  const [timer, setTimer] = React.useState();
   const [historyMes, setHistoryMes] = React.useState([]);
 
   // add auto scroll to bottom
-  const messagesEndRef = React.useRef(null)
+  const messagesEndRef = React.useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+  };
   const [sendPacketVisible, setSendPacketVisible] = React.useState(false);
   let clientPacketConfig = {
     sourcePort: clientPort,
     DestinationPort: serverPort,
     sequenceNumber: INIT_CLIENT_SEQ,
     AckNumber: 0,
-    // Flags: 0,
     ACK: 0,
     SYN: 1,
     FIN: 0,
     inputDisable: true,
     isClientMes: true,
   };
+  let serverPacketConfig = {
+    sourcePort: serverPort,
+    DestinationPort: clientPort,
+    sequenceNumber: INIT_SERVER_SEQ,
+    AckNumber: INIT_CLIENT_SEQ + 1,
+    ACK: 1,
+    SYN: 1,
+    FIN: 0,
+    inputDisable: true,
+    isClientMes: true,
+  };
+  const clientPackConfigs = {
+    0: { ...clientPacketConfig },
+    1: (function () {
+      clientPacketConfig.sequenceNumber += 1;
+      clientPacketConfig.AckNumber = INIT_SERVER_SEQ + 1;
+      clientPacketConfig.ACK = 1;
+      clientPacketConfig.SYN = 0;
+      return { ...clientPacketConfig };
+    })(),
+    2: (function () {
+      // client send data
+      clientPacketConfig.data = "Survival Manual:";
+      return { ...clientPacketConfig };
+    })(),
+    3: (function () {
+      const size = 8;
+      clientPacketConfig.sequenceNumber += size;
+      clientPacketConfig.FIN = 1;
+      clientPacketConfig.data = undefined;
+
+      return { ...clientPacketConfig };
+    })(),
+    4: (function () {
+      clientPacketConfig.sequenceNumber += 1;
+      clientPacketConfig.AckNumber = INIT_SERVER_SEQ + 2;
+      clientPacketConfig.FIN = 0;
+      return { ...clientPacketConfig };
+    })(),
+  };
   const ClientPackets = {
     0: () => {
-      setHistoryMes([...historyMes, { ...clientPacketConfig }]);
+      setHistoryMes([...historyMes, { ...clientPackConfigs[0] }]);
       setTimeout(() => setSendPacketVisible(true), 1000);
     },
     1: () => {
-      const tmpServerSeq = serverSeq + 1;     
-      setServerSeq(tmpServerSeq);
       // 3 way handshake DONE!
-      clientPacketConfig.sequenceNumber += 1;
-      clientPacketConfig.AckNumber = tmpServerSeq;
-      const threeWayHandShakeFinished = {message: true, content: <div className="connect-done">Connection Established!</div>}
+      const threeWayHandShakeFinished = {
+        message: true,
+        content: <div className="connect-done">Connection Established!</div>,
+      };
       setState(stateConfig.FlowControlState);
-      setHistoryMes([...historyMes, { ...clientPacketConfig }, threeWayHandShakeFinished]);
+      const sendPackets = [clientPackConfigs[1], threeWayHandShakeFinished];
+      setHistoryMes([...historyMes, ...sendPackets]);
+      const data = clientPackConfigs[2].data;
+      setTimeout(() => {
+        Modal.confirm({
+          title: "Receive Data ...",
+          content: data,
+          okText: "Receive Data",
+          cancelText: "",
+          closable: false,
+          onOk() {
+            return new Promise((resolve, reject) => {
+              resolve();
+            })
+              .then(() => {
+                setTimeout(() => {
+                  sendPackets.push(clientPackConfigs[2]);
+                  setHistoryMes([...historyMes, ...sendPackets]);
+                  setTimeout(() => {
+                    sendPackets.push(clientPackConfigs[3]);
+                    setHistoryMes([...historyMes, ...sendPackets]);
+                  }, 2000);
+                }, 1000);
+              })
+              .catch((e) => console.log(e));
+          },
+        });
+      }, 3000);
+    },
+    2: () => {
+      const FourWayHandShakeFinished = {
+        message: true,
+        content: <div className="connect-done">Closed!</div>,
+      };
+      setHistoryMes([
+        ...historyMes,
+        clientPackConfigs[4],
+        FourWayHandShakeFinished,
+      ]);
     },
   };
 
+  const serverPackConfigs = {
+    0: { ...serverPacketConfig },
+    1: (function () {
+      const AckNumber = clientPackConfigs[3].sequenceNumber + 1;
+      serverPacketConfig.ACK = 1;
+      serverPacketConfig.SYN = 0;
+      serverPacketConfig.FIN = 1;
+      serverPacketConfig.sequenceNumber = INIT_SERVER_SEQ + 1;
+      serverPacketConfig.AckNumber = AckNumber;
+      return { ...serverPacketConfig };
+    })(),
+  };
   React.useEffect(() => {
     // client seq change, generate client message
-    if (clientSeq !== undefined) {
-      console.log("client seq change: ", clientSeq);
-      let seq = clientSeq - INIT_CLIENT_SEQ;
-      ClientPackets[seq]();
+    if (timer !== undefined) {
+      console.log("timer change: ", timer);
+      let order = timer - INIT_TIMER;
+      ClientPackets[order]();
+      setTimeout(scrollToBottom, 1000);
     }
-  }, [clientSeq]);
-
+  }, [timer]);
   React.useEffect(() => {
-    // server seq change, generate server message
-    if (serverSeq !== undefined) {
-      console.log("server seq change: ", serverSeq);
-      scrollToBottom()
-    }
-  }, [serverSeq]);
+    scrollToBottom();
+  }, [historyMes]);
 
   const closeInfoModal = (e) => {
     changeState(stateConfig.ThreeHandShakeState); // initialize the game state
@@ -93,21 +175,14 @@ function App() {
       Modal.confirm({
         icon: null,
         title: "You Received a handshake packet",
-        content: <BasePacket {...clientPacketConfig} />,
+        content: <BasePacket {...clientPackConfigs[0]} />,
         onOk() {
-          return (
-            new Promise((resolve, reject) => {
-              setClientSeq(INIT_CLIENT_SEQ);
-              setServerSeq(INIT_SERVER_SEQ);
-              resolve();
-            })
-              // .then(() => {
-              //   setHistoryMes([...historyMes, {...firstThreeWayHandShake, isClientMes: true}])
-              //   setTimeout(() =>setSendPacketVisible(true), 1000)
-
-              // })
-              .catch((e) => console.log(e))
-          );
+          return new Promise((resolve, reject) => {
+            // setClientSeq(INIT_CLIENT_SEQ);
+            // setServerSeq(INIT_SERVER_SEQ);
+            setTimer(INIT_TIMER);
+            resolve();
+          }).catch((e) => console.log(e));
         },
       });
     }, 1000);
@@ -136,29 +211,44 @@ function App() {
       />
 
       <div className="container">
-        <div className="info-container client-message">
-          {historyMes.map((ele) => (
-            ele.message? ele.content:
-            <BasePacket {...ele} inputDisable={true} />
-          ))}
+        <div className="info-container">
+          {historyMes.map((ele) => {
+            return ele.message ? (
+              ele.content
+            ) : ele.isClientMes ? (
+              <div
+                className="client-message"
+                style={{
+                  display: "flex",
+                  width: "45%",
+                  alignSelf: "flex-start",
+                }}
+              >
+                {" "}
+                <BasePacket {...ele} inputDisable={true} />{" "}
+              </div>
+            ) : (
+              <div
+                className="server-message"
+                style={{ display: "flex", width: "45%", alignSelf: "flex-end" }}
+              >
+                <BasePacket {...ele} inputDisable={true} />{" "}
+              </div>
+            );
+          })}
           <div ref={messagesEndRef}></div>
         </div>
         {sendPacketVisible ? (
           <SendPacket
             sourcePort={serverPort}
             DestinationPort={clientPort}
-            correctCheck={{
-              AckNumber: clientSeq + 1,
-              ACK: "1",
-              SYN: "1",
-              FIN: "0",
-            }}
+            correctCheck={serverPackConfigs[timer]}
             historyMes={historyMes}
             setHistoryMes={setHistoryMes}
-            sequenceNumber={serverSeq}
+            sequenceNumber={INIT_SERVER_SEQ}
             inputDisable={false}
-            clientSeq={clientSeq}
-            setClientSeq={setClientSeq}
+            timer={timer}
+            setTimer={setTimer}
           />
         ) : (
           ""

@@ -13,61 +13,94 @@ const SendPacket = (props) => {
     SYNError: "SYN ERROR",
     FINError: "FIN ERROR",
     AckNumberError: "ACKNOWLEDGE NUMBER ERROR",
+    sourcePortError: "SOURCE PORT ERROR",
+    sequenceNumberError: "SEQUENCE NUMBER ERROR",
+    DestinationPortError: "DESTINATION PORT ERROR",
   };
-
   return (
     <div className="send-packet">
       <RefPacket {...props} />
-      <Button className="send-btn"
+      <Button
+        className="send-btn"
         onClick={() => {
-          const sourcePort = $(".send-packet #source-port")[0].value;
-          const sequenceNumber = $(".send-packet #seq-number")[0].value;
-          const DestinationPort = $(".send-packet #destination-port")[0].value;
-          const AckNumber = $(".send-packet #ack-number")[0].value;
-          const ACK = $(".send-packet #ACK")[0].value;
-          const SYN = $(".send-packet #SYN")[0].value;
-          const FIN = $(".send-packet #FIN")[0].value;
+          const sourcePort = parseInt($(".send-packet #source-port")[0].value);
+          const sequenceNumber = parseInt($(".send-packet #seq-number")[0].value);
+          const DestinationPort = parseInt($(".send-packet #destination-port")[0].value);
+          const AckNumber = parseInt($(".send-packet #ack-number")[0].value);
+          const ACK = parseInt($(".send-packet #ACK")[0].value);
+          const SYN = parseInt($(".send-packet #SYN")[0].value);
+          const FIN = parseInt($(".send-packet #FIN")[0].value);
           let isSuccess = true;
-
-          if (AckNumber != correctCheck.AckNumber) {
-              isSuccess = false;
+          if (sourcePort !== correctCheck.sourcePort) {
+            isSuccess = false;
+            notification.error({
+              message: "Send Packet Error:",
+              description: Error.sourcePortError,
+            });
+          }
+          if (DestinationPort !== correctCheck.DestinationPort) {
+            isSuccess = false;
+            notification.error({
+              message: "Send Packet Error:",
+              description: Error.DestinationPortError,
+            });
+          }
+          if (sequenceNumber !== correctCheck.sequenceNumber) {
+            isSuccess = false;
+            notification.error({
+              message: "Send Packet Error:",
+              description: Error.sequenceNumberError,
+            });
+          }
+          if (AckNumber !== correctCheck.AckNumber) {
+            isSuccess = false;
             notification.error({
               message: "Send Packet Error:",
               description: Error.AckNumberError,
             });
           }
           if (ACK !== correctCheck.ACK) {
-              isSuccess = false;
+            isSuccess = false;
             notification.error({
               message: "Send Packet Error:",
               description: Error.ACKError,
             });
           }
           if (SYN !== correctCheck.SYN) {
-              isSuccess = false;
+            isSuccess = false;
             notification.error({
               message: "Send Packet Error:",
               description: Error.SYNError,
             });
           }
           if (FIN !== correctCheck.FIN) {
-              isSuccess = false;
+            isSuccess = false;
             notification.error({
               message: "Send Packet Error:",
               description: Error.FINError,
             });
           }
           if (isSuccess) {
-              notification.success({
-                  message: "Send Packet Success",
-                  description: "..."
-              })
+            notification.success({
+              message: "Send Packet Success",
+              description: "...",
+            });
 
-              props.setHistoryMes([...props.historyMes, {
-                  sourcePort, DestinationPort, sequenceNumber, AckNumber, ACK, FIN, SYN, isClientMes: false
-              }])
-            const tmpClientSeq = props.clientSeq + 1;
-            props.setClientSeq(tmpClientSeq)
+            props.setHistoryMes([
+              ...props.historyMes,
+              {
+                sourcePort,
+                DestinationPort,
+                sequenceNumber,
+                AckNumber,
+                ACK,
+                FIN,
+                SYN,
+                isClientMes: false,
+              },
+            ]);
+            const tmpTimer = props.timer + 1;
+            props.setTimer(tmpTimer);
           }
         }}
       >

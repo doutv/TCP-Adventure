@@ -67,8 +67,8 @@
   padding: 0 10px;
 }
 
-.client-message .packet  {
-  margin-bottom: 10px;
+.server-message {
+  margin-bottom: 20px;
   animation-duration: 1s;
   animation-name: slideinLeft;
 }
@@ -76,7 +76,7 @@
 @keyframes slideinLeft {
   from {
     margin-right: 100%;
-    width: -300%;
+    width: -200%;
   }
 
   to {
@@ -84,15 +84,16 @@
     width: -100%;
   }
 }
-.server-message .packet  {
-  animation-duration: 3s;
+.client-message {
+  margin-bottom: 20px;
+  animation-duration: 2s;
   animation-name: slideinRight;
 }
 
 @keyframes slideinRight {
   from {
     margin-left: 100%;
-    width: 300%;
+    width: 200%;
   }
 
   to {
