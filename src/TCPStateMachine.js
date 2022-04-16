@@ -1,11 +1,15 @@
 import { createMachine } from 'xstate';
 
+function getDataSizeInBytes(data) {
+    return new Blob([data]).size;
+}
+
 function increaseSequenceNumber(context) {
-    if (context.outputSegment.SYN === 1) {
+    if (context.outputSegment.SYN === 1 || context.outputSegment.FIN === 1) {
         context.sequenceNumber++;
     }
-    else if (context.outputSegment.hasOwnProperty(data)) {
-        context.sequenceNumber += new Blob([context.outputSegment.data]).size;
+    else if (context.outputSegment.hasOwnProperty('data')) {
+        context.sequenceNumber += getDataSizeInBytes(context.outputSegment.data);
     }
 }
 
@@ -13,7 +17,7 @@ function checkRecvSegment(context, recvSegment) {
     return (
         recvSegment.ACK === 1 &&
         recvSegment.sourcePort === context.destinationPort &&
-        recvSegment.destinationPort == context.sourcePort
+        recvSegment.destinationPort === context.sourcePort
     );
 }
 
@@ -26,7 +30,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                 sourcePort: 3280,
                 destinationPort: 12345,
                 sequenceNumber: initSequenceNumber,
-                windowSize: 666666,
+                windowSize: 1,
                 AckNumber: 0,
                 payload: payload,
                 outstandingSegments: [],
@@ -72,21 +76,21 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                         // RECV_SYN_ACK_SEND_ACK
                         "*": {
                             target: 'ESTABLISHED',
-                            // 同时收到握手包和后面的数据传输包会怎么处理？
+                            // TODO: 同时收到握手包和后面的数据传输包会怎么处理？
                             cond: (context, event) => {
                                 // receive 2nd handshake segment
                                 const recvSegment = event.recvSegments[0];
                                 return (
                                     checkRecvSegment(context, recvSegment) &&
-                                    recvSegment.SYN == 1 &&
-                                    recvSegment.AckNumber == context.sequenceNumber + 1
+                                    recvSegment.SYN === 1 &&
+                                    recvSegment.AckNumber === context.sequenceNumber
                                 );
                             },
                             actions: (context, event) => {
                                 // Send 3rd handshake segment
-                                const recvSegment = event.recvSegments.shift(); // Can it modify the event outside?
+                                const recvSegment = event.recvSegments.shift(); // Can it modify the event outside? YES!
                                 context.AckNumber = recvSegment.sequenceNumber + 1;
-                                context.outputSegments = [{
+                                context.outputSegment = {
                                     sourcePort: context.sourcePort,
                                     destinationPort: context.destinationPort,
                                     sequenceNumber: context.sequenceNumber,
@@ -95,7 +99,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                     ACK: 1,
                                     SYN: 0,
                                     FIN: 0,
-                                }]
+                                };
                                 increaseSequenceNumber(context);
                             }
                         },
@@ -114,13 +118,13 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                 recvSegment = event.recvSegments[0];
                                 return (
                                     checkRecvSegment(context, recvSegment) &&
-                                    recvSegment.SYN == 1
+                                    recvSegment.SYN === 1
                                 );
                             },
                             actions: (context, event) => {
                                 const recvSegment = event.recvSegments.shift(); // Can it modify the event outside?
                                 context.AckNumber = recvSegment.sequenceNumber + 1;
-                                context.outputSegments = [{
+                                context.outputSegment = {
                                     sourcePort: context.sourcePort,
                                     destinationPort: context.destinationPort,
                                     sequenceNumber: context.sequenceNumber,
@@ -129,7 +133,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                     ACK: 1,
                                     SYN: 1,
                                     FIN: 0,
-                                }]
+                                };
                                 increaseSequenceNumber(context);
                             }
                         },
@@ -160,7 +164,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                 recvSegment = event.recvSegments[0];
                                 return (
                                     checkRecvSegment(context, recvSegment) &&
-                                    recvSegment.ACK == 1
+                                    recvSegment.ACK === 1
                                 );
                             },
                         },
@@ -172,20 +176,41 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                 ESTABLISHED: {
                     // Data transfer state
                     on: {
-                        // RECV_AND_SEND_ACK
+                        // receive data
                         "*": {
                             internal: true,
                             cond: (context, event) => {
-                                for (const recvSegment of event.recvSegments) {
-                                    if (checkRecvSegment(context, recvSegment) == false) {
-                                        return false;
-                                    }
-                                }
-                                return true;
+                                const recvSegment = event.recvSegments[0];
+                                return checkRecvSegment(context, recvSegment);
                             },
                             actions: (context, event) => {
-                                // save all segments
-                                context.savedSegments.push(...event.recvSegments);
+                                const recvSegment = event.recvSegments.shift();
+                                // This segment is already saved
+                                if (recvSegment.sequenceNumber < context.AckNumber)
+                                    return;
+                                context.AckNumber = recvSegment.sequenceNumber + getDataSizeInBytes(recvSegment.data);
+                                context.savedSegments.push(recvSegment); // save segment
+                                // The last segment sent by AI is lost, resend the last segment
+                                // by outside application layer
+                                if (recvSegment.AckNumber < context.sequenceNumber)
+                                    return;  // resend
+                            }
+                        },
+                        "SEND_DATA": {
+                            internal: true,
+                            actions: (context, event) => {
+                                context.outputSegment = {
+                                    sourcePort: context.sourcePort,
+                                    destinationPort: context.destinationPort,
+                                    sequenceNumber: context.sequenceNumber,
+                                    windowSize: context.windowSize,
+                                    AckNumber: context.AckNumber,
+                                    ACK: 1,
+                                    SYN: 0,
+                                    FIN: 0,
+                                    data: event.data
+                                };
+                                increaseSequenceNumber(context);
                             }
                         },
                         SEND_FIN: {
@@ -208,22 +233,25 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                 },
                 FIN_WAIT_1: {
                     on: {
-                        RECV_FIN_SEND_ACK: { target: 'CLOSING' },
+                        RECV_FIN_SEND_ACK: {
+                            // simultaneous close
+                            target: 'CLOSING'
+                        },
                         // RECV_FIN_ACK_SEND_ACK
                         "*": {
                             target: 'TIME_WAIT',
                             cond: (context, event) => {
-                                recvSegment = event.recvSegments[0];
+                                const recvSegment = event.recvSegments[0];
                                 return (
                                     checkRecvSegment(context, recvSegment) &&
-                                    recvSegment.FIN == 1 &&
-                                    recvSegment.AckNumber == context.sequenceNumber + 1
+                                    recvSegment.FIN === 1 &&
+                                    recvSegment.AckNumber === context.sequenceNumber
                                 );
                             },
                             actions: (context, event) => {
                                 const recvSegment = event.recvSegments.shift(); // Can it modify the event outside?
                                 context.AckNumber = recvSegment.sequenceNumber + 1;
-                                context.outputSegments = [{
+                                context.outputSegment = {
                                     sourcePort: context.sourcePort,
                                     destinationPort: context.destinationPort,
                                     sequenceNumber: context.sequenceNumber,
@@ -232,18 +260,18 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                     ACK: 1,
                                     SYN: 0,
                                     FIN: 0,
-                                }]
+                                };
                                 increaseSequenceNumber(context);
                             }
                         },
                         // RECV_ACK
-                        "*": {
+                        "RECV_ACK": {
                             target: 'FIN_WAIT_2',
                             cond: (context, event) => {
-                                recvSegment = event.recvSegments.shift();
+                                const recvSegment = event.recvSegments.shift();
                                 return (
                                     checkRecvSegment(context, recvSegment) &&
-                                    recvSegment.AckNumber == context.sequenceNumber + 1
+                                    recvSegment.AckNumber === context.sequenceNumber
                                 );
                             },
                         }
@@ -255,16 +283,16 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                         "*": {
                             target: 'TIME_WAIT',
                             cond: (context, event) => {
-                                recvSegment = event.recvSegments[0];
+                                const recvSegment = event.recvSegments[0];
                                 return (
                                     checkRecvSegment(context, recvSegment) &&
-                                    recvSegment.FIN == 1
+                                    recvSegment.FIN === 1
                                 );
                             },
                             actions: (context, event) => {
                                 const recvSegment = event.recvSegments.shift(); // Can it modify the event outside?
                                 context.AckNumber = recvSegment.sequenceNumber + 1;
-                                context.outputSegments = [{
+                                context.outputSegment = {
                                     sourcePort: context.sourcePort,
                                     destinationPort: context.destinationPort,
                                     sequenceNumber: context.sequenceNumber,
@@ -273,7 +301,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                     ACK: 1,
                                     SYN: 0,
                                     FIN: 0,
-                                }]
+                                };
                                 increaseSequenceNumber(context);
                             }
                         }
@@ -306,4 +334,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
 }
 
 
-export { createTCPStateMachine }
+export {
+    createTCPStateMachine,
+    getDataSizeInBytes
+}
