@@ -31,3 +31,6 @@ code {
   background: #364957 !important;
   color: white !important;
 }
+.ant-input[disabled] {
+  text-overflow: ellipsis !important;
+}

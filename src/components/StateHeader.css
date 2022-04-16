@@ -8,3 +8,8 @@
     font: bold;
     text-align: center
 }
+.help-notification {
+    position: fixed;
+    right: 10px;
+    margin: 5px;
+}

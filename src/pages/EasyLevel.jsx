@@ -1,11 +1,12 @@
 import "./EasyLevel.css";
 import StateHeader from "../components/StateHeader";
 import React from "react";
-import {useNavigate} from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 import { Modal, Result, Button } from "antd";
 import BasePacket from "../components/BasePacket";
 import SendPacket from "../components/sendPacket";
-import { EasyLevelManual } from "../components/text";
+import { EasyLevelManual, SurvivalManual } from "../components/text";
+import $ from "jquery";
 function getRandomNumber(max) {
   return Math.floor(Math.random() * max);
 }
@@ -24,6 +25,8 @@ function EasyLevelGame() {
   };
   const navigate = useNavigate();
   const [state, setState] = React.useState(stateConfig.ThreeHandShakeState);
+  const [newMessComing, setNewMessComing] = React.useState(false);
+  const [survivalHidden, setSurvivalHidden] = React.useState(true);
   const stateRef = React.useRef(null);
   const [showInfoModal, setShowInfoModal] = React.useState(true);
 
@@ -32,6 +35,7 @@ function EasyLevelGame() {
   const [timer, setTimer] = React.useState();
   const [historyMes, setHistoryMes] = React.useState([]);
 
+  const survivalManualText = $('.survival-manual').text();
   // add auto scroll to bottom
   const messagesEndRef = React.useRef(null);
 
@@ -72,12 +76,13 @@ function EasyLevelGame() {
     })(),
     2: (function () {
       // client send data
-      clientPacketConfig.data = "Survival Manual:";
-      return { ...clientPacketConfig };
+      clientPacketConfig.data = survivalManualText;
+      const {sequenceNumber} = clientPacketConfig
+      const byteSize = (new Blob([survivalManualText])).size
+      clientPacketConfig.sequenceNumber += byteSize;
+      return { ...clientPacketConfig, sequenceNumber };
     })(),
     3: (function () {
-      const size = 8;
-      clientPacketConfig.sequenceNumber += size;
       clientPacketConfig.FIN = 1;
       clientPacketConfig.data = undefined;
 
@@ -104,17 +109,18 @@ function EasyLevelGame() {
       setState(stateConfig.FlowControlState);
       const sendPackets = [clientPackConfigs[1], threeWayHandShakeFinished];
       setHistoryMes([...historyMes, ...sendPackets]);
-      const data = clientPackConfigs[2].data;
+      // const data = clientPackConfigs[2].data;
       setTimeout(() => {
         Modal.confirm({
           title: "Receive Data ...",
-          content: data,
+          content: <SurvivalManual />,
           okText: "Receive Data",
           cancelText: () => {},
-          cancelButtonProps: { htmlType: "" },
           closable: false,
           onOk() {
             return new Promise((resolve, reject) => {
+              setSurvivalHidden(false)
+              setNewMessComing(true);
               resolve();
             })
               .then(() => {
@@ -206,6 +212,9 @@ function EasyLevelGame() {
       <StateHeaderRef
         state={state}
         setState={setState}
+        survivalHidden={survivalHidden}
+        newMessComing={newMessComing}
+        setNewMessComing={setNewMessComing}
         ref={stateRef}
         {...stateConfig}
       />
@@ -253,14 +262,27 @@ function EasyLevelGame() {
         ) : (
           ""
         )}
-        {state == stateConfig.Finished? <Result
-        status="success"
-        title="Well Done! You have successfully complete the TCP job!"
-        subTitle="Need more challenge? Try a harder level! Hope you have a deeper understanding of TCP!"
-        extra={[<Button onClick={()=>{
-          navigate("/")
-        }}>Select another Level</Button>]}
-        />: ""}
+        {state == stateConfig.Finished ? (
+          <Result
+            status="success"
+            title="Well Done! You have successfully complete the TCP job!"
+            subTitle="Need more challenge? Try a harder level! Hope you have a deeper understanding of TCP!"
+            extra={[
+              <Button
+                onClick={() => {
+                  navigate("/");
+                }}
+              >
+                Select another Level
+              </Button>,
+            ]}
+          />
+        ) : (
+          ""
+        )}
+        <div hidden={true}>
+          <SurvivalManual />
+        </div>
       </div>
     </div>
   );
