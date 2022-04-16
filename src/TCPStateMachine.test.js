@@ -1,4 +1,4 @@
-import { createTCPStateMachine } from './TCPStateMachine';
+import { createTCPStateMachine, getDataSizeInBytes } from './TCPStateMachine';
 import { getSimplePaths } from '@xstate/graph';
 import { createMachine, interpret } from 'xstate';
 
@@ -39,8 +39,8 @@ it('Easy Level', (done) => {
     });
 
     service.start();
-    const sourcePort = service.machine.context.destinationPort;
-    const destinationPort = service.machine.context.sourcePort;
+    const playerPort = service.machine.context.destinationPort;
+    const AIPort = service.machine.context.sourcePort;
     let playerSequenceNumber = 0;
     let windowSize = service.machine.context.windowSize;
     let AISequenceNumber = service.machine.context.sequenceNumber;
@@ -48,57 +48,125 @@ it('Easy Level', (done) => {
     // AI send 1st handshake segment
     service.send({ type: 'ACTIVE_OPEN' });
     expect(service.machine.context.outputSegment).toEqual({
-        sourcePort: destinationPort,
-        destinationPort: sourcePort,
+        sourcePort: AIPort,
+        destinationPort: playerPort,
         sequenceNumber: AISequenceNumber++,
         windowSize: windowSize,
         AckNumber: 0,
         ACK: 0,
         SYN: 1,
         FIN: 0,
-    })
-    // send 2nd handshake segment
+    });
+
+    // Player send 2nd handshake segment
     let event = {
-        type: 'unknown',
+        type: 'recv_data',
         recvSegments: [{
-            sourcePort: sourcePort,
-            destinationPort: destinationPort,
+            sourcePort: playerPort,
+            destinationPort: AIPort,
             sequenceNumber: playerSequenceNumber++,
             windowSize: windowSize,
-            AckNumber: service.machine.context.sequenceNumber + 1,
+            AckNumber: AISequenceNumber,
             ACK: 1,
             SYN: 1,
             FIN: 0,
         }]
-    }
+    };
     service.send(event);
-    console.log(event)
-    // receive 3rd handshake segment
+    // a TCP segment will be digest
+    // expect(event.recvSegments).toEqual([]);
+
+    // AI send 3rd handshake segment
     expect(service.machine.context.outputSegment).toEqual({
-        sourcePort: destinationPort,
-        destinationPort: sourcePort,
+        sourcePort: AIPort,
+        destinationPort: playerPort,
         sequenceNumber: AISequenceNumber,
         windowSize: windowSize,
         AckNumber: playerSequenceNumber,
         ACK: 1,
         SYN: 0,
         FIN: 0,
-    })
-    service.send({
-        type: 'unknown',
-        recvSegments: [{
-            sourcePort: sourcePort,
-            destinationPort: destinationPort,
-            sequenceNumber: playerSequenceNumber++,
-            windowSize: windowSize,
-            AckNumber: service.machine.context.sequenceNumber + 1,
-            ACK: 1,
-            SYN: 1,
-            FIN: 0,
-            data: "Hello World!"
-        }]
     });
 
+    // Player send a message to AI
+    const message = {
+        sourcePort: playerPort,
+        destinationPort: AIPort,
+        sequenceNumber: playerSequenceNumber,
+        windowSize: windowSize,
+        AckNumber: AISequenceNumber,
+        ACK: 1,
+        SYN: 1,
+        FIN: 0,
+        data: "Hello AI!"
+    };
+    playerSequenceNumber += getDataSizeInBytes(message.data);
+    service.send({
+        type: 'recv_data',
+        recvSegments: [message]
+    });
+    expect(service.machine.context.savedSegments[0]).toEqual(message);
+
+    // AI send a message to player
+    const data = "Hello Player!";
+    service.send({
+        type: 'SEND_DATA',
+        data: data
+    })
+    expect(service.machine.context.outputSegment).toEqual({
+        sourcePort: AIPort,
+        destinationPort: playerPort,
+        sequenceNumber: AISequenceNumber,
+        windowSize: windowSize,
+        AckNumber: playerSequenceNumber,
+        ACK: 1,
+        SYN: 0,
+        FIN: 0,
+        data: data
+    })
+    AISequenceNumber += getDataSizeInBytes(data);
+
+    // AI send 1st terminal handshake
+    service.send({ type: 'SEND_FIN' });
+    expect(service.getSnapshot().value).toBe('FIN_WAIT_1');
+    expect(service.machine.context.outputSegment).toEqual({
+        sourcePort: AIPort,
+        destinationPort: playerPort,
+        sequenceNumber: AISequenceNumber++,
+        windowSize: windowSize,
+        AckNumber: playerSequenceNumber,
+        ACK: 1,
+        SYN: 0,
+        FIN: 1,
+    })
+
+    // ignore 2nd terminal handshake
+    // Player send 3rd terminal handshake
+    service.send({
+        type: 'recv_data',
+        recvSegments: [{
+            sourcePort: playerPort,
+            destinationPort: AIPort,
+            sequenceNumber: playerSequenceNumber++,
+            windowSize: windowSize,
+            AckNumber: AISequenceNumber,
+            ACK: 1,
+            SYN: 0,
+            FIN: 1,
+        }]
+    })
+    expect(service.getSnapshot().value).toBe('TIME_WAIT');
+    // AI send 4th terminal handshake
+    expect(service.machine.context.outputSegment).toEqual({
+        sourcePort: AIPort,
+        destinationPort: playerPort,
+        sequenceNumber: AISequenceNumber,
+        windowSize: windowSize,
+        AckNumber: playerSequenceNumber,
+        ACK: 1,
+        SYN: 0,
+        FIN: 0,
+    });
 });
 // => 'resolved'
 
