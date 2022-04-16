@@ -1,5 +1,8 @@
 import React from "react";
 import "./StateHeader.css"
+import {QuestionCircleOutlined} from "@ant-design/icons"
+import { Modal } from "antd";
+import { EasyLevelManual } from "./text";
 const StateHeader = (props, ref) => {
     let {state, setState} = props
     let {ThreeHandShakeState, FourHandShakeState, FlowControlState, Finished} = props
@@ -22,6 +25,15 @@ const StateHeader = (props, ref) => {
           : state === FourHandShakeState
           ? 'Finish data transmission'
           : 'TCP Closed'}
+          <QuestionCircleOutlined color="white" style={{float: 'right', fontSize:"40px", margin:"5px"}} onClick={()=>{
+            Modal.confirm({
+                width:"800px",
+                cancelText:() => {},
+                title: "Tips",
+                content: <EasyLevelManual />
+            })
+          }}/>
+          
         </div>
     )
 }

@@ -1,0 +1,110 @@
+
+@import '~antd/dist/antd.css';
+
+.info-container {
+  height: 80%; 
+  max-height: 80%;
+  overflow-y: scroll;
+  background-color: #e7e7e7;
+  padding: 10px;
+  border: 10px solid white;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  display: flex;
+  flex-direction:column;
+  position: absolute;
+    left: 10px;
+    top: 70px;
+    right: 10px;
+    bottom: 10px;
+}
+.packet .ant-tag{
+  align-self: center;
+}
+
+.packet .ant-row {
+  padding: 0 10px;
+}
+
+.server-message {
+  margin-bottom: 20px;
+  animation-duration: 1s;
+  animation-name: slideinLeft;
+}
+
+@keyframes slideinLeft {
+  from {
+    margin-right: 100%;
+    width: -200%;
+  }
+
+  to {
+    margin-right: 0;
+    width: -100%;
+  }
+}
+.client-message {
+  margin-bottom: 20px;
+  animation-duration: 2s;
+  animation-name: slideinRight;
+}
+
+@keyframes slideinRight {
+  from {
+    margin-left: 100%;
+    width: 200%;
+  }
+
+  to {
+    margin-left: 0%;
+    width: 100%;
+  }
+}
+
+.ant-btn {
+  margin: 7px; 
+
+}
+
+
+
+.ant-btn-default:hover {
+  border: #364957 solid;
+  color:#364957
+}
+.ant-btn-default:focus {
+  border: #364957 solid;
+  color:#364957 
+}
+
+.send-btn {
+  width:50%;
+  margin-top:10%;
+  margin-left:10%
+}
+.send-packet {
+  display: flex;
+  width: 50%;
+  align-self: center;
+}
+.send-packet .packet{
+  width: 100% !important;
+}
+
+
+.ant-modal-confirm-content .packet {
+  width: 100% !important;
+
+}
+
+.connect-done {
+  border-radius: 10px;
+  border: black solid 2px;
+  margin: 10px;
+  font-size: 20px;
+  background: white;
+  text-align: center;
+}
