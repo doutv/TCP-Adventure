@@ -12,7 +12,22 @@ code {
     monospace;
 }
 
+.ant-modal-content {
+  min-width: 500px;
+}
 .ant-modal-body {
   max-height: 500px;
   overflow-y: scroll;
+
+}
+
+.coming-soon-page {
+  background-image: url(./img/coming-soon-page.png);
+  background-repeat:no-repeat;
+  background-color: #f5f6fc;
+  min-height: 100vh;
+}
+.ant-btn {
+  background: #364957 !important;
+  color: white !important;
 }

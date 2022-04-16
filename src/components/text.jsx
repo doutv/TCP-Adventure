@@ -12,10 +12,12 @@ const EasyLevelManual = ()=> (
         <h2>Easy Level</h2>
         <p>In this level, a mysterious person will send you a survival manual to help you. You should send proper TCP segments to complete a TCP connection.</p>
         <h3>Tips:</h3>
-        <p>You will go through three TCP phases: connection establishment, data transfer, and connection termination. 
-        Connection establishment
+        <p>You will go through three TCP phases: 
+            <li>1. Connection establishment</li>
+            <li>2. Data transmission</li>
+            <li>3. Connection termination</li>
         </p>
-        <Image src={ThreeWayHandshakeImage} />
+        <Image src={ThreeWayHandshakeImage} alt="Connection establishment" />
     </div>
 )
 

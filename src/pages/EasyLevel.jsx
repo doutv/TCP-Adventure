@@ -1,7 +1,8 @@
 import "./EasyLevel.css";
 import StateHeader from "../components/StateHeader";
 import React from "react";
-import { Modal } from "antd";
+import {useNavigate} from "react-router-dom"
+import { Modal, Result, Button } from "antd";
 import BasePacket from "../components/BasePacket";
 import SendPacket from "../components/sendPacket";
 import { EasyLevelManual } from "../components/text";
@@ -21,8 +22,7 @@ function EasyLevelGame() {
     FourHandShakeState: 2,
     Finished: 3,
   };
-  const [clientSeq, setClientSeq] = React.useState();
-  const [serverSeq, setServerSeq] = React.useState();
+  const navigate = useNavigate();
   const [state, setState] = React.useState(stateConfig.ThreeHandShakeState);
   const stateRef = React.useRef(null);
   const [showInfoModal, setShowInfoModal] = React.useState(true);
@@ -139,6 +139,7 @@ function EasyLevelGame() {
         content: <div className="connect-done">Closed!</div>,
       };
       setState(stateConfig.Finished);
+      setSendPacketVisible(false);
       setHistoryMes([
         ...historyMes,
         clientPackConfigs[4],
@@ -178,13 +179,11 @@ function EasyLevelGame() {
     setTimeout(() => {
       Modal.confirm({
         icon: null,
-        title: "You Received a handshake packet",
+        title: "Listen! You Received a handshake packet:",
         content: <BasePacket {...clientPackConfigs[0]} />,
         cancelText: () => {},
         onOk() {
           return new Promise((resolve, reject) => {
-            // setClientSeq(INIT_CLIENT_SEQ);
-            // setServerSeq(INIT_SERVER_SEQ);
             setTimer(INIT_TIMER);
             resolve();
           }).catch((e) => console.log(e));
@@ -194,7 +193,6 @@ function EasyLevelGame() {
   };
   return (
     <div className="easy-level-game">
-      {/* TODO: Complete Background Information on Modal, showing at the beginning of the game */}
       <Modal
         closable={false}
         cancelText={() => {}}
@@ -255,6 +253,14 @@ function EasyLevelGame() {
         ) : (
           ""
         )}
+        {state == stateConfig.Finished? <Result
+        status="success"
+        title="Well Done! You have successfully complete the TCP job!"
+        subTitle="Need more challenge? Try a harder level! Hope you have a deeper understanding of TCP!"
+        extra={[<Button onClick={()=>{
+          navigate("/")
+        }}>Select another Level</Button>]}
+        />: ""}
       </div>
     </div>
   );
