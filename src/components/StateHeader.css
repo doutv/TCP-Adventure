@@ -1,0 +1,10 @@
+.state-header {
+    position: fixed top;
+    background: #3e3e3e;
+    color:white;
+    height: 50px;
+    width: 100%;
+    line-height: 50px;
+    font: bold;
+    text-align: center
+}
