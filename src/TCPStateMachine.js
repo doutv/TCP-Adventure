@@ -49,7 +49,6 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                     ACK: 0,
                                     SYN: 1,
                                     FIN: 0,
-                                    data: ''
                                 }
                                 increaseSequenceNumber(context);
                             }
@@ -57,7 +56,10 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                         PASSIVE_OPEN: {
                             target: 'LISTEN'
                         }
-                    }
+                    },
+                    // meta: {
+                    //     test:
+                    // }
                 },
                 SYN_SENT: {
                     after: {
@@ -72,15 +74,16 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                             target: 'ESTABLISHED',
                             // 同时收到握手包和后面的数据传输包会怎么处理？
                             cond: (context, event) => {
-                                recvSegment = event.recvSegments[0];
+                                // receive 2nd handshake segment
+                                const recvSegment = event.recvSegments[0];
                                 return (
-                                    checkRecvSegment(recvSegment) &&
-                                    recvSegment.ACK == 1 &&
-                                    recvSegment.SYN == 1
+                                    checkRecvSegment(context, recvSegment) &&
+                                    recvSegment.SYN == 1 &&
+                                    recvSegment.AckNumber == context.sequenceNumber + 1
                                 );
                             },
                             actions: (context, event) => {
-                                // 消耗 event 中的第一个握手包
+                                // Send 3rd handshake segment
                                 const recvSegment = event.recvSegments.shift(); // Can it modify the event outside?
                                 context.AckNumber = recvSegment.sequenceNumber + 1;
                                 context.outputSegments = [{
@@ -92,7 +95,6 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                     ACK: 1,
                                     SYN: 0,
                                     FIN: 0,
-                                    data: ''
                                 }]
                                 increaseSequenceNumber(context);
                             }
@@ -111,7 +113,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                             cond: (context, event) => {
                                 recvSegment = event.recvSegments[0];
                                 return (
-                                    checkRecvSegment(recvSegment) &&
+                                    checkRecvSegment(context, recvSegment) &&
                                     recvSegment.SYN == 1
                                 );
                             },
@@ -127,7 +129,6 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                     ACK: 1,
                                     SYN: 1,
                                     FIN: 0,
-                                    data: ''
                                 }]
                                 increaseSequenceNumber(context);
                             }
@@ -144,7 +145,6 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                     ACK: 1,
                                     SYN: 1,
                                     FIN: 0,
-                                    data: ''
                                 }
                                 increaseSequenceNumber(context);
                             }
@@ -159,7 +159,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                             cond: (context, event) => {
                                 recvSegment = event.recvSegments[0];
                                 return (
-                                    checkRecvSegment(recvSegment) &&
+                                    checkRecvSegment(context, recvSegment) &&
                                     recvSegment.ACK == 1
                                 );
                             },
@@ -177,7 +177,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                             internal: true,
                             cond: (context, event) => {
                                 for (const recvSegment of event.recvSegments) {
-                                    if (checkRecvSegment(recvSegment, context) == false) {
+                                    if (checkRecvSegment(context, recvSegment) == false) {
                                         return false;
                                     }
                                 }
@@ -200,7 +200,6 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                     ACK: 1,
                                     SYN: 0,
                                     FIN: 1,
-                                    data: ''
                                 }
                                 increaseSequenceNumber(context);
                             }
@@ -216,7 +215,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                             cond: (context, event) => {
                                 recvSegment = event.recvSegments[0];
                                 return (
-                                    checkRecvSegment(recvSegment) &&
+                                    checkRecvSegment(context, recvSegment) &&
                                     recvSegment.FIN == 1 &&
                                     recvSegment.AckNumber == context.sequenceNumber + 1
                                 );
@@ -233,7 +232,6 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                     ACK: 1,
                                     SYN: 0,
                                     FIN: 0,
-                                    data: ''
                                 }]
                                 increaseSequenceNumber(context);
                             }
@@ -244,7 +242,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                             cond: (context, event) => {
                                 recvSegment = event.recvSegments.shift();
                                 return (
-                                    checkRecvSegment(recvSegment) &&
+                                    checkRecvSegment(context, recvSegment) &&
                                     recvSegment.AckNumber == context.sequenceNumber + 1
                                 );
                             },
@@ -259,7 +257,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                             cond: (context, event) => {
                                 recvSegment = event.recvSegments[0];
                                 return (
-                                    checkRecvSegment(recvSegment) &&
+                                    checkRecvSegment(context, recvSegment) &&
                                     recvSegment.FIN == 1
                                 );
                             },
@@ -275,7 +273,6 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                     ACK: 1,
                                     SYN: 0,
                                     FIN: 0,
-                                    data: ''
                                 }]
                                 increaseSequenceNumber(context);
                             }
@@ -305,7 +302,7 @@ function createTCPStateMachine(initSequenceNumber, payload) {
 
             }
         }
-    )
+    );
 }
 
 
