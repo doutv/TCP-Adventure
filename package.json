@@ -6,12 +6,15 @@
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.0.1",
     "@testing-library/user-event": "^13.5.0",
+    "@xstate/graph": "^1.4.2",
+    "@xstate/test": "^0.5.1",
     "antd": "^4.19.5",
     "jquery": "^3.6.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "xstate": "^4.31.0"
   },
   "scripts": {
     "start": "react-scripts start",
