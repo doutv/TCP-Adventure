@@ -1,4 +1,4 @@
-import { Image } from "antd";
+import { Divider, Image } from "antd";
 import ThreeWayHandshakeImage from "../img/three-way-handshake.png";
 const BackgroundMessage = () => (
   <div className="background-description">
@@ -30,7 +30,7 @@ const EasyLevelManual = (props) => (
       <li>3. Connection termination</li>
     </p>
     <Image src={ThreeWayHandshakeImage} alt="Connection establishment" />
-    {props.survivalHidden ? "" : <SurvivalManual />}
+    {props.showSurvivalManual ? <div className="survival-manual"><Divider /> <SurvivalManual /></div> : ""}
   </div>
 );
 
@@ -39,20 +39,38 @@ const SurvivalManual = () => {
     <div className="survival-manual">
       <h1>Survival Manual</h1>
       <p>
-        Sequence Number: a counter used to keep track of every byte sent outward
-        by a host, excluding header size.
+        <b>Sequence Number:</b> a counter used to keep track of every byte sent
+        outward by a host, excluding header size.
       </p>
       <p>
-        Acknowledgment Number: the next sequence number that the sender of the
-        ACK is expecting.
+        <b>Acknowledgment Number:</b> the next sequence number that the sender
+        of the ACK is expecting.
       </p>
-      <p>
+      <mark>
         Sequence Number = last TCP segment sequence number + last TCP segment
-        data size (If your last TCP segment is with SYN=1, then Sequence Number = your
+        data size{" "}
+      </mark>
+      <p>
+        (If your last TCP segment is with SYN=1, then Sequence Number = your
         last sequence number +1)
       </p>
     </div>
   );
 };
 
-export { BackgroundMessage, EasyLevelManual, SurvivalManual};
+const EasyLevelFirstTaskDescription = ()=> {
+  return <div className="first-task-description">
+    <h2>What should you do next?</h2>
+    <p>
+      Your sequence number is automatically generated.
+    </p>
+    <p>
+      You need to complete the <b>ackNumber</b>and <b>flags<mark>(ACK, SYN, FIN)</mark></b> in the below.
+    </p>
+    <p>
+      You should input the correct answer and send it, otherwise you will get error notifications.
+    </p>
+  </div>
+}
+
+export { BackgroundMessage, EasyLevelManual, SurvivalManual, EasyLevelFirstTaskDescription };

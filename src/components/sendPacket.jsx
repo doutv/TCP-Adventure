@@ -82,8 +82,8 @@ const SendPacket = (props) => {
           }
           if (isSuccess) {
             notification.success({
-              message: "Send Packet Success",
-              description: "...",
+              message: "Send Packet Successfully",
+              // description: "...",
             });
 
             props.setHistoryMes([

@@ -1,12 +1,16 @@
 .state-header {
     position: fixed top;
     background: #3e3e3e;
-    color:white;
+    /* color:white !important; */
     height: 50px;
     width: 100%;
     line-height: 50px;
     font: bold;
     text-align: center
+}
+.state-header h1 {
+    display: inline-block;
+    color: white
 }
 .help-notification {
     position: fixed;

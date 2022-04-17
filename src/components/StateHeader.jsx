@@ -23,14 +23,15 @@ const StateHeader = (props, ref) => {
 
   return (
     <div className="state-header">
-      State:{" "}
+      <h1>State:{" "}
       {state === ThreeHandShakeState
         ? "Connection is establishing ... "
         : state === FlowControlState
         ? "Connection established, data transmission ..."
         : state === FourHandShakeState
         ? "Finish data transmission"
-        : "TCP Closed"}
+        : "TCP Closed"}</h1>
+      
       <Badge
         dot={props.newMessComing}
         className="help-notification"
@@ -46,7 +47,7 @@ const StateHeader = (props, ref) => {
               width: "800px",
               cancelText: () => {},
               title: "Tips",
-              content: <EasyLevelManual survivalHidden={props.survivalHidden}/>,
+              content: <EasyLevelManual showSurvivalManual={props.showSurvivalManual}/>,
             });
             props.setNewMessComing(false);
           }}

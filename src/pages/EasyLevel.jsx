@@ -1,11 +1,12 @@
 import "./EasyLevel.css";
 import StateHeader from "../components/StateHeader";
 import React from "react";
+import {NotificationOutlined} from "@ant-design/icons"
 import { useNavigate } from "react-router-dom";
-import { Modal, Result, Button } from "antd";
+import { Modal, Result, Button, notification, Badge, Divider } from "antd";
 import BasePacket from "../components/BasePacket";
 import SendPacket from "../components/sendPacket";
-import { EasyLevelManual, SurvivalManual } from "../components/text";
+import { EasyLevelFirstTaskDescription, EasyLevelManual, SurvivalManual } from "../components/text";
 import $ from "jquery";
 function getRandomNumber(max) {
   return Math.floor(Math.random() * max);
@@ -26,7 +27,7 @@ function EasyLevelGame() {
   const navigate = useNavigate();
   const [state, setState] = React.useState(stateConfig.ThreeHandShakeState);
   const [newMessComing, setNewMessComing] = React.useState(false);
-  const [survivalHidden, setSurvivalHidden] = React.useState(true);
+  const [showSurvivalManual, setShowSurvivalManual] = React.useState(false);
   const stateRef = React.useRef(null);
   const [showInfoModal, setShowInfoModal] = React.useState(true);
 
@@ -119,7 +120,13 @@ function EasyLevelGame() {
           closable: false,
           onOk() {
             return new Promise((resolve, reject) => {
-              setSurvivalHidden(false)
+              notification.info({
+                message: "Survival Manual is Available.",
+                description:" Check if you need help!",
+                placement: "topRight",
+                icon: <Badge dot><NotificationOutlined /></Badge>
+              })
+              setShowSurvivalManual(true)
               setNewMessComing(true);
               resolve();
             })
@@ -185,8 +192,14 @@ function EasyLevelGame() {
     setTimeout(() => {
       Modal.confirm({
         icon: null,
-        title: "Listen! You Received a handshake packet:",
-        content: <BasePacket {...clientPackConfigs[0]} />,
+        title: "Listen! You have received a handshake packet:",
+        content: 
+        <div >
+          <BasePacket {...clientPackConfigs[0]} />
+          <Divider/>
+          <EasyLevelFirstTaskDescription />
+        </div>,
+        
         cancelText: () => {},
         onOk() {
           return new Promise((resolve, reject) => {
@@ -212,7 +225,7 @@ function EasyLevelGame() {
       <StateHeaderRef
         state={state}
         setState={setState}
-        survivalHidden={survivalHidden}
+        showSurvivalManual={showSurvivalManual}
         newMessComing={newMessComing}
         setNewMessComing={setNewMessComing}
         ref={stateRef}
