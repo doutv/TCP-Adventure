@@ -1,24 +1,21 @@
 import { createTCPStateMachine, getDataSizeInBytes } from './TCPStateMachine';
-import { getSimplePaths } from '@xstate/graph';
-import { createMachine, interpret } from 'xstate';
-
+import { interpret } from 'xstate';
+import { createModel } from '@xstate/test';
 
 const testTCPStateMachine = createTCPStateMachine(0, "");
 
 /*
-const promiseService = interpret(testTCPStateMachine).onTransition((state) =>
-    console.log(state.value, state.context)
-);
-promiseService.start();
-
-promiseService.send({ type: 'ACTIVE_OPEN' });
-*/
-
-// model-based testing
-/*
-describe('feedback app', () => {
-    const testPlans = feedbackModel.getShortestPathPlans();
-
+describe('model-based testing', () => {
+    const model = createModel(testTCPStateMachine).withEvents({
+        ACTIVE_OPEN: {
+            exec: () => { }
+        },
+        RECV_FIN_ACK_SEND_ACK: {
+            exec: () => { }
+        }
+    });
+    const testPlans = model.getShortestPathPlans();
+    console.log(testPlans);
     testPlans.forEach();
 
     it('should have full coverage', () => {
@@ -47,7 +44,7 @@ it('Easy Level', (done) => {
 
     // AI send 1st handshake segment
     service.send({ type: 'ACTIVE_OPEN' });
-    expect(service.machine.context.outputSegment).toEqual({
+    expect(service.getSnapshot().context.outputSegment).toEqual({
         sourcePort: AIPort,
         destinationPort: playerPort,
         sequenceNumber: AISequenceNumber++,
@@ -60,7 +57,7 @@ it('Easy Level', (done) => {
 
     // Player send 2nd handshake segment
     let event = {
-        type: 'recv_data',
+        type: 'RECV_SEGMENT',
         recvSegments: [{
             sourcePort: playerPort,
             destinationPort: AIPort,
@@ -73,11 +70,9 @@ it('Easy Level', (done) => {
         }]
     };
     service.send(event);
-    // a TCP segment will be digest
-    // expect(event.recvSegments).toEqual([]);
 
     // AI send 3rd handshake segment
-    expect(service.machine.context.outputSegment).toEqual({
+    expect(service.getSnapshot().context.outputSegment).toEqual({
         sourcePort: AIPort,
         destinationPort: playerPort,
         sequenceNumber: AISequenceNumber,
@@ -96,13 +91,13 @@ it('Easy Level', (done) => {
         windowSize: windowSize,
         AckNumber: AISequenceNumber,
         ACK: 1,
-        SYN: 1,
+        SYN: 0,
         FIN: 0,
         data: "Hello AI!"
     };
     playerSequenceNumber += getDataSizeInBytes(message.data);
     service.send({
-        type: 'recv_data',
+        type: 'RECV_SEGMENT',
         recvSegments: [message]
     });
     expect(service.machine.context.savedSegments[0]).toEqual(message);
@@ -113,7 +108,7 @@ it('Easy Level', (done) => {
         type: 'SEND_DATA',
         data: data
     })
-    expect(service.machine.context.outputSegment).toEqual({
+    expect(service.getSnapshot().context.outputSegment).toEqual({
         sourcePort: AIPort,
         destinationPort: playerPort,
         sequenceNumber: AISequenceNumber,
@@ -129,7 +124,7 @@ it('Easy Level', (done) => {
     // AI send 1st terminal handshake
     service.send({ type: 'SEND_FIN' });
     expect(service.getSnapshot().value).toBe('FIN_WAIT_1');
-    expect(service.machine.context.outputSegment).toEqual({
+    expect(service.getSnapshot().context.outputSegment).toEqual({
         sourcePort: AIPort,
         destinationPort: playerPort,
         sequenceNumber: AISequenceNumber++,
@@ -143,7 +138,7 @@ it('Easy Level', (done) => {
     // ignore 2nd terminal handshake
     // Player send 3rd terminal handshake
     service.send({
-        type: 'recv_data',
+        type: 'RECV_SEGMENT',
         recvSegments: [{
             sourcePort: playerPort,
             destinationPort: AIPort,
@@ -157,7 +152,7 @@ it('Easy Level', (done) => {
     })
     expect(service.getSnapshot().value).toBe('TIME_WAIT');
     // AI send 4th terminal handshake
-    expect(service.machine.context.outputSegment).toEqual({
+    expect(service.getSnapshot().context.outputSegment).toEqual({
         sourcePort: AIPort,
         destinationPort: playerPort,
         sequenceNumber: AISequenceNumber,
