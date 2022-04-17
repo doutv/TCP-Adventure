@@ -30,7 +30,13 @@ const EasyLevelManual = (props) => (
       <li>3. Connection termination</li>
     </p>
     <Image src={ThreeWayHandshakeImage} alt="Connection establishment" />
-    {props.showSurvivalManual ? <div className="survival-manual"><Divider /> <SurvivalManual /></div> : ""}
+    {props.showSurvivalManual ? (
+      <div className="survival-manual">
+        <Divider /> <SurvivalManual />
+      </div>
+    ) : (
+      ""
+    )}
   </div>
 );
 
@@ -58,19 +64,55 @@ const SurvivalManual = () => {
   );
 };
 
-const EasyLevelFirstTaskDescription = ()=> {
-  return <div className="first-task-description">
-    <h2>What should you do next?</h2>
-    <p>
-      Your sequence number is automatically generated.
-    </p>
-    <p>
-      You need to complete the <b>ackNumber</b>and <b>flags<mark>(ACK, SYN, FIN)</mark></b> in the below.
-    </p>
-    <p>
-      You should input the correct answer and send it, otherwise you will get error notifications.
-    </p>
-  </div>
-}
+const EasyLevelFirstTaskDescription = () => {
+  return (
+    <div className="first-task-description">
+      <h2>What should you do next?</h2>
+      <p>Your sequence number is automatically generated.</p>
+      <p>
+        You need to complete the <b>ackNumber</b>and{" "}
+        <b>
+          flags<mark>(ACK, SYN, FIN)</mark>
+        </b>{" "}
+        in the below.
+      </p>
+      <p>
+        You should input the correct answer and send it, otherwise you will get
+        error notifications.
+      </p>
+    </div>
+  );
+};
 
-export { BackgroundMessage, EasyLevelManual, SurvivalManual, EasyLevelFirstTaskDescription };
+const EasyLevelSecondTaskDescription = () => {
+  return (
+    <div className="second-task-description">
+      <h2>What should you do next?</h2>
+      <p>
+        Remember the definition of <b>sequenceNumber</b>, <b>ackNumber</b> and{" "}
+        <b>flags</b> ?
+        <p>Pay attention to what you have lastly received! </p>
+      </p>
+      <p>
+        You should modify the <b>sequenceNumber</b> <b>ackNumber</b> and{" "}
+        <b>
+          flags<mark>(ACK, SYN, FIN)</mark>
+        </b>{" "}
+        in the below.
+      </p>
+     
+      <p>
+        You should input the correct answer and send it, otherwise you will get
+        error notifications.
+      </p>
+    </div>
+  );
+};
+
+export {
+  BackgroundMessage,
+  EasyLevelManual,
+  SurvivalManual,
+  EasyLevelFirstTaskDescription,
+  EasyLevelSecondTaskDescription
+};

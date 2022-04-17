@@ -1,13 +1,14 @@
 import "./EasyLevel.css";
 import StateHeader from "../components/StateHeader";
 import React from "react";
-import {NotificationOutlined} from "@ant-design/icons"
+import {SoundOutlined} from "@ant-design/icons"
 import { useNavigate } from "react-router-dom";
 import { Modal, Result, Button, notification, Badge, Divider } from "antd";
 import BasePacket from "../components/BasePacket";
 import SendPacket from "../components/sendPacket";
 import { EasyLevelFirstTaskDescription, EasyLevelManual, SurvivalManual } from "../components/text";
 import $ from "jquery";
+import EasyLevelSteps from "../components/Steps";
 function getRandomNumber(max) {
   return Math.floor(Math.random() * max);
 }
@@ -124,7 +125,7 @@ function EasyLevelGame() {
                 message: "Survival Manual is Available.",
                 description:" Check if you need help!",
                 placement: "topRight",
-                icon: <Badge dot><NotificationOutlined /></Badge>
+                icon: <Badge dot><SoundOutlined /></Badge>
               })
               setShowSurvivalManual(true)
               setNewMessComing(true);
@@ -296,6 +297,9 @@ function EasyLevelGame() {
         <div hidden={true}>
           <SurvivalManual />
         </div>
+      </div>
+      <div className="progress">
+        <EasyLevelSteps current={state <= stateConfig.FlowControlState? 0: 1}/>
       </div>
     </div>
   );
