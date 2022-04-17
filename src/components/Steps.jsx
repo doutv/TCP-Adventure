@@ -14,6 +14,7 @@ const EasyLevelSteps = (props) => {
     <div className="easy-level step-drawer">
       <Tooltip title="Tasks">
         <ForwardOutlined
+        className="open-progress"
           style={{
             fontSize: "40px",
             position: "fixed",

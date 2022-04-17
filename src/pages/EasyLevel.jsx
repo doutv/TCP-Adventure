@@ -1,14 +1,20 @@
 import "./EasyLevel.css";
 import StateHeader from "../components/StateHeader";
 import React from "react";
-import {SoundOutlined} from "@ant-design/icons"
+import { SoundOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { Modal, Result, Button, notification, Badge, Divider } from "antd";
 import BasePacket from "../components/BasePacket";
 import SendPacket from "../components/sendPacket";
-import { EasyLevelFirstTaskDescription, EasyLevelManual, SurvivalManual } from "../components/text";
+import {
+  EasyLevelFirstTaskDescription,
+  EasyLevelManual,
+  SurvivalManual,
+} from "../components/text";
 import $ from "jquery";
 import EasyLevelSteps from "../components/Steps";
+import { Steps, Hints } from "intro.js-react";
+
 function getRandomNumber(max) {
   return Math.floor(Math.random() * max);
 }
@@ -18,13 +24,33 @@ const INIT_CLIENT_SEQ = getRandomNumber(1e5);
 const INIT_SERVER_SEQ = getRandomNumber(1e5);
 const INIT_TIMER = 0;
 const StateHeaderRef = React.forwardRef(StateHeader);
+const stateConfig = {
+  ThreeHandShakeState: 0,
+  FlowControlState: 1,
+  FourHandShakeState: 2,
+  Finished: 3,
+};
+const stepsForBeginner = {
+  initialStep: 0,
+  options: { showStepNumbers: false },
+
+  steps: [
+    {
+      element: ".state-header h1",
+      intro: "TCP state",
+      position: "bottom",
+    },
+    {
+      element: ".help-notification",
+      intro: "Help Message",
+    },
+    {
+      element: ".open-progress",
+      intro: "Your current progress and suggestion.",
+    },
+  ],
+};
 function EasyLevelGame() {
-  const stateConfig = {
-    ThreeHandShakeState: 0,
-    FlowControlState: 1,
-    FourHandShakeState: 2,
-    Finished: 3,
-  };
   const navigate = useNavigate();
   const [state, setState] = React.useState(stateConfig.ThreeHandShakeState);
   const [newMessComing, setNewMessComing] = React.useState(false);
@@ -33,11 +59,11 @@ function EasyLevelGame() {
   const [showInfoModal, setShowInfoModal] = React.useState(true);
 
   const changeState = (newState) => stateRef.current.changeState(newState);
-
+  const [stepsEnable, setStepsEnable] = React.useState(false);
   const [timer, setTimer] = React.useState();
   const [historyMes, setHistoryMes] = React.useState([]);
 
-  const survivalManualText = $('.survival-manual').text();
+  const survivalManualText = $(".survival-manual").text();
   // add auto scroll to bottom
   const messagesEndRef = React.useRef(null);
 
@@ -79,8 +105,8 @@ function EasyLevelGame() {
     2: (function () {
       // client send data
       clientPacketConfig.data = survivalManualText;
-      const {sequenceNumber} = clientPacketConfig
-      const byteSize = (new Blob([survivalManualText])).size
+      const { sequenceNumber } = clientPacketConfig;
+      const byteSize = new Blob([survivalManualText]).size;
       clientPacketConfig.sequenceNumber += byteSize;
       return { ...clientPacketConfig, sequenceNumber };
     })(),
@@ -123,11 +149,15 @@ function EasyLevelGame() {
             return new Promise((resolve, reject) => {
               notification.info({
                 message: "Survival Manual is Available.",
-                description:" Check if you need help!",
+                description: " Check if you need help!",
                 placement: "topRight",
-                icon: <Badge dot><SoundOutlined /></Badge>
-              })
-              setShowSurvivalManual(true)
+                icon: (
+                  <Badge dot>
+                    <SoundOutlined />
+                  </Badge>
+                ),
+              });
+              setShowSurvivalManual(true);
               setNewMessComing(true);
               resolve();
             })
@@ -194,17 +224,19 @@ function EasyLevelGame() {
       Modal.confirm({
         icon: null,
         title: "Listen! You have received a handshake packet:",
-        content: 
-        <div >
-          <BasePacket {...clientPackConfigs[0]} />
-          <Divider/>
-          <EasyLevelFirstTaskDescription />
-        </div>,
-        
+        content: (
+          <div>
+            <BasePacket {...clientPackConfigs[0]} />
+            <Divider />
+            <EasyLevelFirstTaskDescription />
+          </div>
+        ),
+
         cancelText: () => {},
         onOk() {
           return new Promise((resolve, reject) => {
             setTimer(INIT_TIMER);
+            setStepsEnable(true);
             resolve();
           }).catch((e) => console.log(e));
         },
@@ -222,7 +254,13 @@ function EasyLevelGame() {
       >
         <EasyLevelManual />
       </Modal>
-
+      <Steps
+        {...stepsForBeginner}
+        enabled={stepsEnable}
+        onExit={() => {
+          setStepsEnable(false);
+        }}
+      />
       <StateHeaderRef
         state={state}
         setState={setState}
@@ -299,7 +337,9 @@ function EasyLevelGame() {
         </div>
       </div>
       <div className="progress">
-        <EasyLevelSteps current={state <= stateConfig.FlowControlState? 0: 1}/>
+        <EasyLevelSteps
+          current={state <= stateConfig.FlowControlState ? 0 : 1}
+        />
       </div>
     </div>
   );

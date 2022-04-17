@@ -1,6 +1,6 @@
 
 @import '~antd/dist/antd.css';
-
+@import "intro.js/introjs.css";
 .info-container {
   height: 80%; 
   max-height: 80%;
