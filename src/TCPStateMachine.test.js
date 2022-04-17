@@ -16,6 +16,7 @@ it('Two Machines talking to each other', (done) => {
         console.log("Player: ", state.value, state.context);
     });
     const getOutputSegment = (service) => { return service.getSnapshot().context.outputSegment; }
+    const getLastSavedSegment = (service) => { return service.getSnapshot().context.savedSegments[service.getSnapshot().context.savedSegments.length - 1]; }
     AIService.start();
     playerService.start();
 
@@ -48,8 +49,28 @@ it('Two Machines talking to each other', (done) => {
         type: "RECV_SEGMENT",
         recvSegments: [getOutputSegment(playerService)]
     });
-    expect(AIService.getSnapshot().context.savedSegments[AIService.getSnapshot().context.savedSegments.length - 1])
+    expect(getLastSavedSegment(AIService))
         .toEqual(getOutputSegment(playerService));
+
+    AIService.send({
+        type: 'SEND_DATA',
+        data: "Hello Player!"
+    });
+    playerService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(AIService)]
+    });
+    expect(getLastSavedSegment(playerService))
+        .toEqual(getOutputSegment(AIService));
+    // send an old segment to player
+    const oldSegment = Object.assign({}, getOutputSegment(AIService)); // shallow copy
+    oldSegment.data = "Old data, should not be saved";
+    playerService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [oldSegment]
+    });
+    expect(getLastSavedSegment(playerService)).not.toEqual(oldSegment);
+
 
 })
 
@@ -178,7 +199,8 @@ it('Easy Level', (done) => {
         type: 'RECV_SEGMENT',
         recvSegments: [message]
     });
-    expect(service.machine.context.savedSegments[0]).toEqual(message);
+    expect(service.machine.context.savedSegments[service.getSnapshot().context.savedSegments.length - 1])
+        .toEqual(message);
 
     // AI send a message to player
     const data = "Hello Player!";
