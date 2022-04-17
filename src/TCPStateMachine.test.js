@@ -15,12 +15,17 @@ describe('model-based testing', () => {
             exec: (playerService) => {
                 playerService.send({ 'type': 'ACTIVE_OPEN' });
             }
+        },
+        RECV_SEGMENT: {
+            exec: (playerService) => {
+                playerService.send({ 'type': 'SEND_SYN' });
+            }
         }
     });
     const testPlans = testModel.getShortestPathPlans({
         filter: (state) => {
             // console.log(state.value);
-            return !(state.value == "SYN_SENT");
+            return state.context.SYN == 1;
         }
     });
     testPlans.forEach((plan) => {
@@ -50,7 +55,7 @@ it('Easy Level', (done) => {
     const service = interpret(AIMachine).onTransition((state) => {
         // this is where you expect the state to eventually
         // be reached
-        // console.log(state.value, state.context)
+        console.log(state.value, state.context);
         if (state.matches('CLOSED')) {
             done();
         }

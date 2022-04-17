@@ -12,6 +12,31 @@ function checkRecvSegment(context, recvSegment) {
     );
 }
 
+const sendSegment = (context, event) => {
+    // Send segment by updating context
+    const oldSequenceNumber = context.sequenceNumber;
+    let outputSegment = {
+        sourcePort: context.sourcePort,
+        destinationPort: context.destinationPort,
+        sequenceNumber: oldSequenceNumber,
+        windowSize: context.windowSize,
+        AckNumber: context.AckNumber,
+        ACK: context.ACK,
+        SYN: context.SYN,
+        FIN: context.FIN,
+    }
+    let newSequenceNumber = context.sequenceNumber;
+    if (context.SYN === 1 || context.FIN === 1) {
+        newSequenceNumber++;
+    }
+    else if (event.hasOwnProperty('data')) {
+        newSequenceNumber += getDataSizeInBytes(event.data);
+        outputSegment["data"] = event.data;
+    }
+    context["sequenceNumber"] = newSequenceNumber;
+    context["outputSegment"] = outputSegment;
+}
+
 const TCPReceiverBaseGuard = (context, event) => {
     // All recvSegments should pass this
     if (!event.hasOwnProperty("recvSegments") || event.recvSegments.length === 0) {
@@ -57,11 +82,13 @@ function createTCPStateMachine(initSequenceNumber, payload) {
             },
             states: {
                 CLOSED: {
-                    exit: assign({ ACK: 0, SYN: 1, FIN: 0 }),
                     on: {
                         ACTIVE_OPEN: {
                             target: 'SYN_SENT',
-                            actions: 'generateOutputSegment'
+                            actions: (context, event) => {
+                                Object.assign(context, { ACK: 0, SYN: 1, FIN: 0 });
+                                sendSegment(context, event);
+                            }
                         },
                         PASSIVE_OPEN: {
                             target: 'LISTEN'
@@ -75,22 +102,21 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                             target: 'CLOSED'
                         }
                     },
-                    exit: assign({ ACK: 1, SYN: 0, FIN: 0 }),
                     on: {
                         // RECV_SYN_ACK_SEND_ACK
                         RECV_SEGMENT: {
                             target: 'ESTABLISHED',
                             cond: (context, event) => {
-                                if (!TCPReceiverBaseGuard(context, event)) {
-                                    return false;
-                                }
-                                const recvSegment = event.recvSegments[0];
                                 return (
-                                    recvSegment.SYN === 1 &&
-                                    recvSegment.AckNumber === context.sequenceNumber
+                                    TCPReceiverBaseGuard(context, event) &&
+                                    event.recvSegments[0].SYN === 1 &&
+                                    event.recvSegments[0].AckNumber === context.sequenceNumber
                                 );
                             },
-                            actions: 'generateOutputSegment',
+                            actions: (context, event) => {
+                                Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
+                                sendSegment(context, event);
+                            }
                         },
                         RECV_SYN_SEND_SYN_ACK: {
                             target: 'SYN_RCVD'
@@ -99,152 +125,184 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                     }
                 },
                 LISTEN: {
-                    // TODO
-                    exit: assign({ ACK: 1, SYN: 1, FIN: 0 }),
                     on: {
                         // RECV_SYN_SEND_SYN_ACK
                         RECV_SEGMENT: {
                             target: 'SYN_RCVD',
                             cond: (context, event) => {
-                                if (!event.hasOwnProperty("recvSegments") || event.recvSegments.length === 0) {
-                                    return false;
-                                }
-                                recvSegment = event.recvSegments[0];
-                                if (
-                                    checkRecvSegment(context, recvSegment) &&
+                                return (
+                                    TCPReceiverBaseGuard(context, event) &&
                                     recvSegment.SYN === 1
-                                ) {
-                                    const recvSegment = event.recvSegments.shift();
-                                    context.AckNumber = recvSegment.sequenceNumber + 1;
-                                    return true;
-                                }
-                                return false;
+                                )
                             },
-                            actions: 'generateOutputSegment',
+                            actions: (context, event) => {
+                                Object.assign(context, { ACK: 1, SYN: 1, FIN: 0 });
+                                sendSegment(context, event);
+                            }
                         },
                         SEND_SYN: {
                             target: 'SYN_SENT',
-                            actions: 'generateOutputSegment',
+                            actions: (context, event) => {
+                                Object.assign(context, { ACK: 0, SYN: 1, FIN: 0 });
+                                sendSegment(context, event);
+                            }
                         }
-                    }
+                    },
                 },
                 SYN_RCVD: {
-                    // TODO
+                    // after: {
+                    //     // TODO
+                    //     // TIMEOUT_SEND_RST
+                    //     30000: {
+                    //         target: 'CLOSED',
+                    //         actions: (context, event) => {
+                    //             Object.assign(context,{ ACK: 0, SYN: 0, FIN: 0, RST: 1 });
+                    //             generateOutputSegment(context, event);
+                    //         }
+                    //     }
+                    // },
                     on: {
-                        // RECV_ACK
-                        RECV_SEGMENT: {
-                            target: 'ESTABLISHED',
-                            cond: (context, event) => {
-                                if (!event.hasOwnProperty("recvSegments") || event.recvSegments.length === 0) {
-                                    return false;
+                        RECV_SEGMENT: [
+                            {
+                                // RECV_ACK
+                                target: 'ESTABLISHED',
+                                cond: (context, event) => {
+                                    return TCPReceiverBaseGuard(context, event);
                                 }
-                                recvSegment = event.recvSegments[0];
-                                return (
-                                    checkRecvSegment(context, recvSegment)
-                                );
                             },
+                            {
+                                // RECV_RST
+                                target: 'CLOSED',
+                                cond: (context, event) => {
+                                    return (
+                                        TCPReceiverBaseGuard(context, event) &&
+                                        event.recvSegments[0].RST === 1
+                                    );
+                                }
+                            }
+                        ],
+                        SEND_FIN: {
+                            target: 'FIN_WAIT_1',
+                            actions: (context, event) => {
+                                Object.assign(context, { ACK: 1, SYN: 0, FIN: 1 });
+                                sendSegment(context, event);
+                            }
                         },
-                        SEND_FIN: { target: 'FIN_WAIT_1' },
-                        TIMEOUT_SEND_RST: { target: 'CLOSED' },
-                        RECV_RST: { target: 'LISTEN' }
+                        RECV_RST: {
+                            // TODO
+                            target: 'LISTEN'
+                        }
                     }
                 },
                 ESTABLISHED: {
                     // Data transfer state
-                    entry: assign({ ACK: 1, SYN: 0, FIN: 0 }),
-                    exit: assign({ ACK: 1, SYN: 0, FIN: 1 }),
                     on: {
                         // receive data
-                        RECV_SEGMENT: {
-                            internal: true,
-                            cond: (context, event) => {
-                                return TCPReceiverBaseGuard(context, event);
+                        RECV_SEGMENT: [
+                            {
+                                internal: true,
+                                cond: (context, event) => {
+                                    return TCPReceiverBaseGuard(context, event);
+                                },
+                                actions: (context, event) => {
+                                    const recvSegment = event.recvSegments[0];
+                                    context.savedSegments.push(recvSegment); // save segment
+                                    // The last segment sent by AI is lost, resend the last segment
+                                    // by outside application layer
+                                    if (recvSegment.AckNumber < context.sequenceNumber)
+                                        return;  // TODO: resend
+                                },
                             },
-                            actions: (context, event) => {
-                                const recvSegment = event.recvSegments[0];
-                                context.savedSegments.push(recvSegment); // save segment
-                                // The last segment sent by AI is lost, resend the last segment
-                                // by outside application layer
-                                if (recvSegment.AckNumber < context.sequenceNumber)
-                                    return;  // resend
+                            {
+                                // RECV_FIN
+                                target: 'CLOSE_WAIT',
+                                cond: (context, event) => {
+                                    return (
+                                        TCPReceiverBaseGuard(context, event) &&
+                                        event.recvSegments[0].FIN === 1
+                                    );
+                                },
+                                actions: (context, event) => {
+                                    Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
+                                    sendSegment(context, event);
+                                },
                             }
-                        },
+                        ],
                         SEND_DATA: {
                             internal: true,
-                            actions: 'generateOutputSegment'
+                            actions: (context, event) => {
+                                Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
+                                sendSegment(context, event);
+                            }
                         },
                         SEND_FIN: {
                             target: 'FIN_WAIT_1',
-                            actions: 'generateOutputSegment' // assign({ ACK: 1, SYN: 0, FIN: 1 })
-                        }
+                            actions: (context, event) => {
+                                Object.assign(context, { ACK: 1, SYN: 0, FIN: 1 });
+                                sendSegment(context, event);
+                            }
+                        },
                     }
                 },
                 FIN_WAIT_1: {
-                    exit: assign({ ACK: 1, SYN: 0, FIN: 0 }),
                     on: {
-                        RECV_FIN_SEND_ACK: {
-                            // TODO: simultaneous close
-                            target: 'CLOSING'
-                        },
-                        // RECV_FIN_ACK_SEND_ACK
-                        RECV_SEGMENT: {
-                            target: 'TIME_WAIT',
-                            cond: (context, event) => {
-                                if (!TCPReceiverBaseGuard(context, event)) {
-                                    return false;
+
+                        RECV_SEGMENT: [
+                            {
+                                target: 'TIME_WAIT',
+                                cond: (context, event) => {
+                                    return (
+                                        TCPReceiverBaseGuard(context, event) &&
+                                        event.recvSegments[0].FIN === 1 &&
+                                        event.recvSegments[0].AckNumber === context.sequenceNumber
+                                    );
+                                },
+                                actions: (context, event) => {
+                                    Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
+                                    sendSegment(context, event);
                                 }
-                                const recvSegment = event.recvSegments[0];
-                                return (
-                                    recvSegment.FIN === 1 &&
-                                    recvSegment.AckNumber === context.sequenceNumber
-                                );
                             },
-                            actions: 'generateOutputSegment'
-                        },
-                        // TODO: RECV_ACK
-                        RECV_ACK: {
-                            target: 'FIN_WAIT_2',
-                            cond: (context, event) => {
-                                if (!event.hasOwnProperty("recvSegments") || event.recvSegments.length === 0) {
-                                    return false;
-                                }
-                                const recvSegment = event.recvSegments.shift();
-                                return (
-                                    checkRecvSegment(context, recvSegment) &&
-                                    recvSegment.AckNumber === context.sequenceNumber
-                                );
+                            {
+                                // RECV_ACK
+                                target: 'FIN_WAIT_2',
+                                cond: (context, event) => {
+                                    return (
+                                        TCPReceiverBaseGuard(context, event) &&
+                                        event.recvSegments[0].AckNumber === context.sequenceNumber
+                                    );
+                                },
                             },
-                        }
-                    }
+                            /*
+                            {
+                                // RECV_FIN_SEND_ACK
+                                // TODO: simultaneous close
+                                target: 'CLOSING'
+                            }
+                            */
+                        ],
+                    },
                 },
                 FIN_WAIT_2: {
-                    exit: assign({ ACK: 1, SYN: 0, FIN: 0 }),
                     on: {
                         // RECV_FIN_SEND_ACK
                         RECV_SEGMENT: {
                             target: 'TIME_WAIT',
                             cond: (context, event) => {
-                                if (!event.hasOwnProperty("recvSegments") || event.recvSegments.length === 0) {
-                                    return false;
-                                }
-                                const recvSegment = event.recvSegments[0];
-                                if (
-                                    checkRecvSegment(context, recvSegment) &&
-                                    recvSegment.FIN === 1
-                                ) {
-                                    event.recvSegments.shift(); // Can it modify the event outside?
-                                    context.AckNumber = recvSegment.sequenceNumber + 1;
-                                    return true;
-                                }
-                                return false;
+                                return (
+                                    TCPReceiverBaseGuard(context, recvSegment) &&
+                                    event.recvSegments[0].FIN === 1
+                                );
                             },
-                            actions: 'generateOutputSegment'
+                            actions: (context, event) => {
+                                Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
+                                sendSegment(context, event);
+                            }
                         }
                     }
                 },
                 CLOSING: {
                     on: {
-                        // simultaneously close
+                        // TODO: simultaneously close
                         RECV_ACK: { target: "TIME_WAIT" }
                     }
                 },
@@ -257,37 +315,33 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                             target: 'CLOSED'
                         }
                     ]
+                },
+                CLOSE_WAIT: {
+                    on: {
+                        SEND_FIN: {
+                            target: 'LAST_ACK',
+                            actions: (context, event) => {
+                                Object.assign(context, { ACK: 1, SYN: 0, FIN: 1 });
+                                sendSegment(context, event);
+                            }
+                        },
+                    }
+                },
+                LAST_ACK: {
+                    on: {
+                        RECV_SEGMENT: {
+                            target: 'CLOSED',
+                            cond: (context, event) => {
+                                return TCPReceiverBaseGuard(context, event);
+                            }
+                        }
+                    }
                 }
             },
         },
         {
             actions: {
-                generateOutputSegment: assign((context, event) => {
-                    const oldSequenceNumber = context.sequenceNumber;
-                    let outputSegment = {
-                        sourcePort: context.sourcePort,
-                        destinationPort: context.destinationPort,
-                        sequenceNumber: oldSequenceNumber,
-                        windowSize: context.windowSize,
-                        AckNumber: context.AckNumber,
-                        ACK: context.ACK,
-                        SYN: context.SYN,
-                        FIN: context.FIN,
-                    }
-                    let newSequenceNumber = context.sequenceNumber;
-                    if (context.SYN === 1 || context.FIN === 1) {
-                        newSequenceNumber++;
-                    }
-                    else if (event.hasOwnProperty('data')) {
-                        newSequenceNumber += getDataSizeInBytes(event.data);
-                        outputSegment["data"] = event.data;
-                    }
-                    return {
-                        ...context,
-                        sequenceNumber: newSequenceNumber,
-                        outputSegment: outputSegment
-                    }
-                })
+
             },
             guards: {
                 recvSYN: (context, event) => {
