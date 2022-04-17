@@ -2,8 +2,58 @@ import { createTCPStateMachine, getDataSizeInBytes } from './TCPStateMachine';
 import { interpret } from 'xstate';
 import { createModel } from '@xstate/test';
 
-const AIMachine = createTCPStateMachine(0, "");
 
+it('Two Machines talking to each other', (done) => {
+    const AIMachine = createTCPStateMachine(3280, 12345, 100, "");
+    const playerMachine = createTCPStateMachine(12345, 3280, 10000, "");
+    const AIService = interpret(AIMachine).onTransition((state) => {
+        console.log("AI: ", state.value, state.context);
+        if (state.matches('CLOSED')) {
+            done();
+        }
+    });
+    const playerService = interpret(playerMachine).onTransition((state) => {
+        console.log("Player: ", state.value, state.context);
+    });
+    const getOutputSegment = (service) => { return service.getSnapshot().context.outputSegment; }
+    AIService.start();
+    playerService.start();
+
+    // Player send 1st handshake
+    playerService.send({ type: 'ACTIVE_OPEN' });
+    AIService.send({ type: 'PASSIVE_OPEN' });
+    // AI get 1st handshake and send 2nd handshake
+    AIService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(playerService)]
+    });
+    // Player get 2nd handshake and send 3rd handshake
+    playerService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(AIService)]
+    });
+    AIService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(playerService)]
+    });
+    expect(AIService.getSnapshot().value).toBe('ESTABLISHED');
+    expect(playerService.getSnapshot().value).toBe('ESTABLISHED');
+
+    // ------------ Connection ESTABLISHED ---------------------
+    playerService.send({
+        type: 'SEND_DATA',
+        data: "Hello AI!"
+    });
+    AIService.send({
+        type: "RECV_SEGMENT",
+        recvSegments: [getOutputSegment(playerService)]
+    });
+    expect(AIService.getSnapshot().context.savedSegments[AIService.getSnapshot().context.savedSegments.length - 1])
+        .toEqual(getOutputSegment(playerService));
+
+})
+
+/*
 describe('model-based testing', () => {
     const testModel = createModel(AIMachine).withEvents({
         ACTIVE_OPEN: {
@@ -35,7 +85,7 @@ describe('model-based testing', () => {
                     // TODO: create a player machine to talk with AI machine
                     const playerMachine = createTCPStateMachine(0, "");
                     const playerService = interpret(playerMachine).onTransition((state) => {
-                        if (state.matches('LISTEN')) {
+                        if (state.matches('ESTABLISHED')) {
                             done();
                         }
                     });
@@ -49,9 +99,11 @@ describe('model-based testing', () => {
     //     return testModel.testCoverage();
     // });
 });
+*/
 
 // BDD behavior-driven development
 it('Easy Level', (done) => {
+    const AIMachine = createTCPStateMachine(3280, 12345, 100, "");
     const service = interpret(AIMachine).onTransition((state) => {
         // this is where you expect the state to eventually
         // be reached

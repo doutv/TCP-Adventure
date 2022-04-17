@@ -4,16 +4,10 @@ function getDataSizeInBytes(data) {
     return new Blob([data]).size;
 }
 
-function checkRecvSegment(context, recvSegment) {
-    return (
-        recvSegment.ACK === 1 &&
-        recvSegment.sourcePort === context.destinationPort &&
-        recvSegment.destinationPort === context.sourcePort
-    );
-}
-
+/** 
+ * Send segment by updating context
+*/
 const sendSegment = (context, event) => {
-    // Send segment by updating context
     const oldSequenceNumber = context.sequenceNumber;
     let outputSegment = {
         sourcePort: context.sourcePort,
@@ -37,8 +31,10 @@ const sendSegment = (context, event) => {
     context["outputSegment"] = outputSegment;
 }
 
+/**
+ * All recvSegments should pass this
+ */
 const TCPReceiverBaseGuard = (context, event) => {
-    // All recvSegments should pass this
     if (!event.hasOwnProperty("recvSegments") || event.recvSegments.length === 0) {
         return false;
     }
@@ -57,17 +53,18 @@ const TCPReceiverBaseGuard = (context, event) => {
     else if (recvSegment.hasOwnProperty('data')) {
         context.AckNumber = recvSegment.sequenceNumber + getDataSizeInBytes(recvSegment.data);
     }
+    context.savedSegments.push(recvSegment); // save segment
     return true;
 };
 
-function createTCPStateMachine(initSequenceNumber, payload) {
+function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, payload) {
     return createMachine(
         {
             id: 'TCPMachine',
             initial: 'CLOSED',
             context: {
-                sourcePort: 3280,
-                destinationPort: 12345,
+                sourcePort: sourcePort,
+                destinationPort: destinationPort,
                 sequenceNumber: initSequenceNumber,
                 windowSize: 1,
                 AckNumber: 0,
@@ -86,8 +83,10 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                         ACTIVE_OPEN: {
                             target: 'SYN_SENT',
                             actions: (context, event) => {
+                                // send 1st handshake
                                 Object.assign(context, { ACK: 0, SYN: 1, FIN: 0 });
                                 sendSegment(context, event);
+                                context.outputSegment.AckNumber = 0;
                             }
                         },
                         PASSIVE_OPEN: {
@@ -130,10 +129,18 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                         RECV_SEGMENT: {
                             target: 'SYN_RCVD',
                             cond: (context, event) => {
-                                return (
-                                    TCPReceiverBaseGuard(context, event) &&
-                                    recvSegment.SYN === 1
-                                )
+                                // Attention: the first handshake with ACK = 0
+                                const recvSegment = event.recvSegments[0];
+                                if (
+                                    recvSegment.ACK === 0 &&
+                                    recvSegment.SYN === 1 &&
+                                    recvSegment.sourcePort === context.destinationPort &&
+                                    recvSegment.destinationPort === context.sourcePort
+                                ) {
+                                    context.AckNumber = recvSegment.sequenceNumber + 1;
+                                    return true;
+                                }
+                                return false;
                             },
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 1, SYN: 1, FIN: 0 });
@@ -206,7 +213,6 @@ function createTCPStateMachine(initSequenceNumber, payload) {
                                 },
                                 actions: (context, event) => {
                                     const recvSegment = event.recvSegments[0];
-                                    context.savedSegments.push(recvSegment); // save segment
                                     // The last segment sent by AI is lost, resend the last segment
                                     // by outside application layer
                                     if (recvSegment.AckNumber < context.sequenceNumber)
