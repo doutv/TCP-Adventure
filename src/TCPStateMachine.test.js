@@ -2,34 +2,55 @@ import { createTCPStateMachine, getDataSizeInBytes } from './TCPStateMachine';
 import { interpret } from 'xstate';
 import { createModel } from '@xstate/test';
 
-const testTCPStateMachine = createTCPStateMachine(0, "");
+const AIMachine = createTCPStateMachine(0, "");
 
-/*
 describe('model-based testing', () => {
-    const model = createModel(testTCPStateMachine).withEvents({
+    const testModel = createModel(AIMachine).withEvents({
         ACTIVE_OPEN: {
-            exec: () => { }
+            exec: (playerService) => {
+                playerService.send({ 'type': 'PASSIVE_OPEN' });
+            }
         },
-        RECV_FIN_ACK_SEND_ACK: {
-            exec: () => { }
+        PASSIVE_OPEN: {
+            exec: (playerService) => {
+                playerService.send({ 'type': 'ACTIVE_OPEN' });
+            }
         }
     });
-    const testPlans = model.getShortestPathPlans();
-    console.log(testPlans);
-    testPlans.forEach();
-
-    it('should have full coverage', () => {
-        return testModel.testCoverage();
+    const testPlans = testModel.getShortestPathPlans({
+        filter: (state) => {
+            // console.log(state.value);
+            return !(state.value == "SYN_SENT");
+        }
     });
+    testPlans.forEach((plan) => {
+        describe(plan.description, () => {
+            plan.paths.forEach((path) => {
+                it(path.description, async () => {
+                    // TODO: create a player machine to talk with AI machine
+                    const playerMachine = createTCPStateMachine(0, "");
+                    const playerService = interpret(playerMachine).onTransition((state) => {
+                        if (state.matches('LISTEN')) {
+                            done();
+                        }
+                    });
+                    await path.test(playerService);
+                });
+            });
+        });
+    });
+
+    // it('should have full coverage', () => {
+    //     return testModel.testCoverage();
+    // });
 });
-*/
 
 // BDD behavior-driven development
 it('Easy Level', (done) => {
-    const service = interpret(testTCPStateMachine).onTransition((state) => {
+    const service = interpret(AIMachine).onTransition((state) => {
         // this is where you expect the state to eventually
         // be reached
-        console.log(state.value, state.context)
+        // console.log(state.value, state.context)
         if (state.matches('CLOSED')) {
             done();
         }
