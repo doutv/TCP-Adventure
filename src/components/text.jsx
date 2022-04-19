@@ -48,17 +48,15 @@ const SurvivalManual = () => {
         <b>Sequence Number:</b> a counter used to keep track of every byte sent
         outward by a host, excluding header size.
       </p>
+      Sequence Number = your last TCP segment sequence number + last TCP segment
+      data size{" "}
+      <p>
+        If your last TCP segment is with flag SYN=1, then <br></br>
+        Sequence Number = your last sequence number +1
+      </p>
       <p>
         <b>Acknowledgment Number:</b> the next sequence number that the sender
         of the ACK is expecting.
-      </p>
-      <mark>
-        Sequence Number = last TCP segment sequence number + last TCP segment
-        data size{" "}
-      </mark>
-      <p>
-        (If your last TCP segment is with SYN=1, then Sequence Number = your
-        last sequence number +1)
       </p>
     </div>
   );
@@ -68,16 +66,15 @@ const EasyLevelFirstTaskDescription = () => {
   return (
     <div className="first-task-description">
       <h2>What should you do next?</h2>
-      <p>Your sequence number is automatically generated.</p>
+      <p>Your <b>Source Port</b>, <b>Destination Port</b>, and <b>Sequence Number</b> are automatically generated.</p>
       <p>
-        You need to complete the <b>ackNumber</b>and{" "}
+        You need to complete the <b>Acknowledgement Number</b> and {" "}
         <b>
-          flags<mark>(ACK, SYN, FIN)</mark>
+          Flags: (ACK, SYN, FIN).
         </b>{" "}
-        in the below.
       </p>
       <p>
-        You should input the correct answer and send it, otherwise you will get
+        You should input the correct answer and send it, or you will get
         error notifications.
       </p>
     </div>
@@ -89,20 +86,19 @@ const EasyLevelSecondTaskDescription = () => {
     <div className="second-task-description">
       <h2>What should you do next?</h2>
       <p>
-        Remember the definition of <b>sequenceNumber</b>, <b>ackNumber</b> and{" "}
-        <b>flags</b> ?
+        Remember the definition of <b>Sequence Number</b>, <b>Acknowledgement Number</b>, and{" "}
+        <b>Flags (ACK, SYN, FIN)</b> ?
         <p>Pay attention to what you have lastly received! </p>
       </p>
       <p>
-        You should modify the <b>sequenceNumber</b> <b>ackNumber</b> and{" "}
+        You should modify the <b>Sequence Number</b>, <b>Acknowledgement Number</b>, and{" "}
         <b>
-          flags<mark>(ACK, SYN, FIN)</mark>
+          Flags (ACK, SYN, FIN).
         </b>{" "}
-        in the below.
       </p>
-     
+
       <p>
-        You should input the correct answer and send it, otherwise you will get
+        You should input the correct answer and send it, or you will get
         error notifications.
       </p>
     </div>

@@ -24,14 +24,14 @@ const StateHeader = (props, ref) => {
   return (
     <div className="state-header">
       <h1>State:{" "}
-      {state === ThreeHandShakeState
-        ? "Connection is establishing ... "
-        : state === FlowControlState
-        ? "Connection established, data transmission ..."
-        : state === FourHandShakeState
-        ? "Finish data transmission"
-        : "TCP Closed"}</h1>
-      
+        {state === ThreeHandShakeState
+          ? "Connection is establishing ... "
+          : state === FlowControlState
+            ? "Connection established, data transmitting ..."
+            : state === FourHandShakeState
+              ? "Finish data transmission"
+              : "TCP Closed"}</h1>
+
       <Badge
         dot={props.newMessComing}
         className="help-notification"
@@ -45,9 +45,9 @@ const StateHeader = (props, ref) => {
 
             Modal.confirm({
               width: "800px",
-              cancelText: () => {},
+              cancelText: () => { },
               title: "Tips",
-              content: <EasyLevelManual showSurvivalManual={props.showSurvivalManual}/>,
+              content: <EasyLevelManual showSurvivalManual={props.showSurvivalManual} />,
             });
             props.setNewMessComing(false);
           }}
