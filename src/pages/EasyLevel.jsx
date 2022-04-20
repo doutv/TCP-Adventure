@@ -143,7 +143,7 @@ function EasyLevelGame() {
           title: "Receive Data ...",
           content: <SurvivalManual />,
           okText: "Receive Data",
-          cancelText: () => {},
+          cancelText: () => { },
           closable: false,
           onOk() {
             return new Promise((resolve, reject) => {
@@ -232,7 +232,7 @@ function EasyLevelGame() {
           </div>
         ),
 
-        cancelText: () => {},
+        cancelText: () => { },
         onOk() {
           return new Promise((resolve, reject) => {
             setTimer(INIT_TIMER);
@@ -247,10 +247,10 @@ function EasyLevelGame() {
     <div className="easy-level-game">
       <Modal
         closable={false}
-        cancelText={() => {}}
+        cancelText={() => { }}
         onOk={closeInfoModal}
         visible={showInfoModal}
-        title="Welcome to TCP Easy Level Game!!!"
+        title="Welcome to TCP Easy Level Game!"
       >
         <EasyLevelManual />
       </Modal>
