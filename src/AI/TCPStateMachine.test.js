@@ -2,18 +2,28 @@ import { createTCPStateMachine, getDataSizeInBytes } from './TCPStateMachine';
 import { interpret } from 'xstate';
 import { createModel } from '@xstate/test';
 
+const prettyPrintState = (state) => {
+    console.log({
+        "state": state.value,
+        "sourcePort": state.context["sourcePort"],
+        "destinationPort": state.context["destinationPort"],
+        "sequenceNumber": state.context["sequenceNumber"],
+        "AckNumber": state.context["AckNumber"],
+        "outputSegment": state.context["outputSegment"],
+        "lastSavedSegment": state.context["savedSegments"][state.context["savedSegments"].length - 1]
+    }
+    );
+}
 
-it('Two Machines talking to each other', (done) => {
-    const AIMachine = createTCPStateMachine(3280, 12345, 100, "");
-    const playerMachine = createTCPStateMachine(12345, 3280, 10000, "");
+it('Two Machines talking to each other', async () => {
+    const MSL = 100;
+    const AIMachine = createTCPStateMachine(3280, 12345, 100, "", MSL);
+    const playerMachine = createTCPStateMachine(12345, 3280, 10000, "", MSL);
     const AIService = interpret(AIMachine).onTransition((state) => {
-        console.log("AI: ", state.value, state.context);
-        if (state.matches('CLOSED')) {
-            done();
-        }
+        prettyPrintState(state);
     });
     const playerService = interpret(playerMachine).onTransition((state) => {
-        console.log("Player: ", state.value, state.context);
+        prettyPrintState(state);
     });
     const getOutputSegment = (service) => { return service.getSnapshot().context.outputSegment; }
     const getLastSavedSegment = (service) => { return service.getSnapshot().context.savedSegments[service.getSnapshot().context.savedSegments.length - 1]; }
@@ -22,12 +32,15 @@ it('Two Machines talking to each other', (done) => {
 
     // Player send 1st handshake
     playerService.send({ type: 'ACTIVE_OPEN' });
+    expect(playerService.getSnapshot().value).toBe("SYN_SENT");
     AIService.send({ type: 'PASSIVE_OPEN' });
+    expect(AIService.getSnapshot().value).toBe("LISTEN");
     // AI get 1st handshake and send 2nd handshake
     AIService.send({
         type: 'RECV_SEGMENT',
         recvSegments: [getOutputSegment(playerService)]
     });
+    expect(AIService.getSnapshot().value).toBe("SYN_RCVD");
     // Player get 2nd handshake and send 3rd handshake
     playerService.send({
         type: 'RECV_SEGMENT',
@@ -41,6 +54,7 @@ it('Two Machines talking to each other', (done) => {
     expect(playerService.getSnapshot().value).toBe('ESTABLISHED');
 
     // ------------ Connection ESTABLISHED ---------------------
+    // Round 1: player -> AI
     playerService.send({
         type: 'SEND_DATA',
         data: "Hello AI!"
@@ -51,7 +65,15 @@ it('Two Machines talking to each other', (done) => {
     });
     expect(getLastSavedSegment(AIService))
         .toEqual(getOutputSegment(playerService));
+    // AI ---ACK---> player
+    playerService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(AIService)]
+    });
+    expect(getLastSavedSegment(playerService))
+        .toEqual(getOutputSegment(AIService));
 
+    // Round 2: AI -> player
     AIService.send({
         type: 'SEND_DATA',
         data: "Hello Player!"
@@ -62,17 +84,99 @@ it('Two Machines talking to each other', (done) => {
     });
     expect(getLastSavedSegment(playerService))
         .toEqual(getOutputSegment(AIService));
-    // send an old segment to player
-    const oldSegment = Object.assign({}, getOutputSegment(AIService)); // shallow copy
-    oldSegment.data = "Old data, should not be saved";
+    // player ---ACK---> AI
+    AIService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(playerService)]
+    });
+    expect(getLastSavedSegment(AIService))
+        .toEqual(getOutputSegment(playerService));
+
+    // AI send an old segment to player
+    const oldAISend = Object.assign({}, getOutputSegment(AIService)); // shallow copy
+    oldAISend.data = "Old data, should not be saved";
+    const lastPlayerOutput = Object.assign({}, getOutputSegment(playerService));
     playerService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [oldSegment]
+        recvSegments: [oldAISend]
     });
-    expect(getLastSavedSegment(playerService)).not.toEqual(oldSegment);
+    expect(getLastSavedSegment(playerService)).not.toEqual(oldAISend);
+    // player should not respond to this old segment
+    expect(getOutputSegment(playerService)).toEqual(lastPlayerOutput);
 
+    // Connection termination 4-way handshake
+    // player send FIN
+    playerService.send({
+        type: 'SEND_FIN'
+    });
+    expect(playerService.getSnapshot().value).toBe("FIN_WAIT_1");
+    // AI receive FIN and send ACK
+    AIService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(playerService)]
+    });
+    expect(AIService.getSnapshot().value).toBe("CLOSE_WAIT");
+    // player receive ACK
+    playerService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(AIService)]
+    });
+    expect(playerService.getSnapshot().value).toBe("FIN_WAIT_2");
 
-})
+    // AI continue to send data
+    AIService.send({
+        type: 'SEND_DATA',
+        data: "I want to say:"
+    });
+    playerService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(AIService)]
+    });
+    expect(getLastSavedSegment(playerService))
+        .toEqual(getOutputSegment(AIService));
+    AIService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(playerService)]
+    });
+    expect(getLastSavedSegment(AIService)).toEqual(getOutputSegment(playerService));
+
+    AIService.send({
+        type: 'SEND_DATA',
+        data: "See you next time~"
+    });
+    playerService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(AIService)]
+    });
+    expect(getLastSavedSegment(playerService))
+        .toEqual(getOutputSegment(AIService));
+    AIService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(playerService)]
+    });
+    expect(getLastSavedSegment(AIService)).toEqual(getOutputSegment(playerService));
+
+    // AI send FIN
+    AIService.send({
+        type: 'SEND_FIN'
+    });
+    expect(AIService.getSnapshot().value).toBe("LAST_ACK");
+    // player send ACK
+    playerService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(AIService)]
+    });
+    // AI receive ACK
+    AIService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getOutputSegment(playerService)]
+    });
+    expect(AIService.getSnapshot().value).toBe("CLOSED");
+    // player wait 2MSL from TIME_WAIT to CLOSED
+    expect(playerService.getSnapshot().value).toBe('TIME_WAIT');
+    await new Promise(r => setTimeout(r, 2 * MSL));
+    expect(playerService.getSnapshot().value).toBe("CLOSED");
+});
 
 /*
 describe('model-based testing', () => {
@@ -124,7 +228,8 @@ describe('model-based testing', () => {
 
 // BDD behavior-driven development
 it('Easy Level', (done) => {
-    const AIMachine = createTCPStateMachine(3280, 12345, 100, "");
+    const MSL = 100;
+    const AIMachine = createTCPStateMachine(3280, 12345, 100, "", MSL);
     const service = interpret(AIMachine).onTransition((state) => {
         // this is where you expect the state to eventually
         // be reached

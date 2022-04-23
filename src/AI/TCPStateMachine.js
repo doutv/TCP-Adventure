@@ -34,16 +34,21 @@ const sendSegment = (context, event) => {
 /**
  * All recvSegments should pass this
  */
-const TCPReceiverBaseGuard = (context, event) => {
+const TCPReceiverBaseGuard = (context, event, ACK = 1, SYN = 0, FIN = 0, RST = 0) => {
     if (!event.hasOwnProperty("recvSegments") || event.recvSegments.length === 0) {
         return false;
     }
+    // TODO: resend
+    // if (recvSegment.AckNumber < context.sequenceNumber)
+    //     return;  
     const recvSegment = event.recvSegments[0];
     if (
-        !(recvSegment.ACK === 1) ||
+        !(recvSegment.ACK === ACK) ||
         !(recvSegment.sourcePort === context.destinationPort) ||
         !(recvSegment.destinationPort === context.sourcePort) ||
-        !(recvSegment.sequenceNumber >= context.AckNumber)
+        !(recvSegment.sequenceNumber >= context.AckNumber) ||
+        !(recvSegment.SYN === SYN) ||
+        !(recvSegment.FIN === FIN)
     ) {
         return false;
     }
@@ -57,7 +62,7 @@ const TCPReceiverBaseGuard = (context, event) => {
     return true;
 };
 
-function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, payload) {
+function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, payload, MSL) {
     return createMachine(
         {
             id: 'TCPMachine',
@@ -72,7 +77,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                 outstandingSegments: [],
                 outputSegment: {},
                 savedSegments: [],
-                MSL: 10000, // 10s
+                MSL: MSL, // in ms
                 ACK: 0,
                 SYN: 0,
                 FIN: 0
@@ -106,11 +111,8 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                         RECV_SEGMENT: {
                             target: 'ESTABLISHED',
                             cond: (context, event) => {
-                                return (
-                                    TCPReceiverBaseGuard(context, event) &&
-                                    event.recvSegments[0].SYN === 1 &&
-                                    event.recvSegments[0].AckNumber === context.sequenceNumber
-                                );
+                                return TCPReceiverBaseGuard(context, event, 1, 1, 0, 0);
+                                // event.recvSegments[0].AckNumber === context.sequenceNumber
                             },
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
@@ -130,17 +132,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                             target: 'SYN_RCVD',
                             cond: (context, event) => {
                                 // Attention: the first handshake with ACK = 0
-                                const recvSegment = event.recvSegments[0];
-                                if (
-                                    recvSegment.ACK === 0 &&
-                                    recvSegment.SYN === 1 &&
-                                    recvSegment.sourcePort === context.destinationPort &&
-                                    recvSegment.destinationPort === context.sourcePort
-                                ) {
-                                    context.AckNumber = recvSegment.sequenceNumber + 1;
-                                    return true;
-                                }
-                                return false;
+                                return TCPReceiverBaseGuard(context, event, 0, 1, 0, 0);
                             },
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 1, SYN: 1, FIN: 0 });
@@ -174,17 +166,14 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                                 // RECV_ACK
                                 target: 'ESTABLISHED',
                                 cond: (context, event) => {
-                                    return TCPReceiverBaseGuard(context, event);
+                                    return TCPReceiverBaseGuard(context, event, 1, 0, 0, 0);
                                 }
                             },
                             {
                                 // RECV_RST
                                 target: 'CLOSED',
                                 cond: (context, event) => {
-                                    return (
-                                        TCPReceiverBaseGuard(context, event) &&
-                                        event.recvSegments[0].RST === 1
-                                    );
+                                    return TCPReceiverBaseGuard(context, event, 1, 0, 0, 1);
                                 }
                             }
                         ],
@@ -209,24 +198,21 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                             {
                                 internal: true,
                                 cond: (context, event) => {
-                                    return TCPReceiverBaseGuard(context, event);
+                                    return TCPReceiverBaseGuard(context, event, 1, 0, 0, 0);
                                 },
                                 actions: (context, event) => {
-                                    const recvSegment = event.recvSegments[0];
-                                    // The last segment sent by AI is lost, resend the last segment
-                                    // by outside application layer
-                                    if (recvSegment.AckNumber < context.sequenceNumber)
-                                        return;  // TODO: resend
+                                    // only reply ACK when receive data segment
+                                    if (event.recvSegments[0].hasOwnProperty("data")) {
+                                        Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
+                                        sendSegment(context, event);
+                                    }
                                 },
                             },
                             {
                                 // RECV_FIN
                                 target: 'CLOSE_WAIT',
                                 cond: (context, event) => {
-                                    return (
-                                        TCPReceiverBaseGuard(context, event) &&
-                                        event.recvSegments[0].FIN === 1
-                                    );
+                                    return TCPReceiverBaseGuard(context, event, 1, 0, 1, 0);
                                 },
                                 actions: (context, event) => {
                                     Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
@@ -252,16 +238,11 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                 },
                 FIN_WAIT_1: {
                     on: {
-
                         RECV_SEGMENT: [
                             {
                                 target: 'TIME_WAIT',
                                 cond: (context, event) => {
-                                    return (
-                                        TCPReceiverBaseGuard(context, event) &&
-                                        event.recvSegments[0].FIN === 1 &&
-                                        event.recvSegments[0].AckNumber === context.sequenceNumber
-                                    );
+                                    return TCPReceiverBaseGuard(context, event, 1, 0, 1, 0);
                                 },
                                 actions: (context, event) => {
                                     Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
@@ -272,10 +253,8 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                                 // RECV_ACK
                                 target: 'FIN_WAIT_2',
                                 cond: (context, event) => {
-                                    return (
-                                        TCPReceiverBaseGuard(context, event) &&
-                                        event.recvSegments[0].AckNumber === context.sequenceNumber
-                                    );
+                                    return TCPReceiverBaseGuard(context, event, 1, 0, 0, 0);
+                                    // event.recvSegments[0].AckNumber === context.sequenceNumber
                                 },
                             },
                             /*
@@ -291,19 +270,29 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                 FIN_WAIT_2: {
                     on: {
                         // RECV_FIN_SEND_ACK
-                        RECV_SEGMENT: {
-                            target: 'TIME_WAIT',
-                            cond: (context, event) => {
-                                return (
-                                    TCPReceiverBaseGuard(context, recvSegment) &&
-                                    event.recvSegments[0].FIN === 1
-                                );
+                        RECV_SEGMENT: [
+                            {
+                                target: 'TIME_WAIT',
+                                cond: (context, event) => {
+                                    return TCPReceiverBaseGuard(context, event, 1, 0, 1, 0);
+                                },
+                                actions: (context, event) => {
+                                    Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
+                                    sendSegment(context, event);
+                                }
                             },
-                            actions: (context, event) => {
-                                Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
-                                sendSegment(context, event);
+                            {
+                                // Wait the other side to send the rest data
+                                internal: true,
+                                cond: (context, event) => {
+                                    return TCPReceiverBaseGuard(context, event, 1, 0, 0, 0);
+                                },
+                                actions: (context, event) => {
+                                    Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
+                                    sendSegment(context, event);
+                                }
                             }
-                        }
+                        ]
                     }
                 },
                 CLOSING: {
@@ -331,6 +320,20 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                                 sendSegment(context, event);
                             }
                         },
+                        SEND_DATA: {
+                            internal: true,
+                            actions: (context, event) => {
+                                Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
+                                sendSegment(context, event);
+                            }
+                        },
+                        RECV_SEGMENT: {
+                            // Only receive ACK segments
+                            internal: true,
+                            cond: (context, event) => {
+                                return TCPReceiverBaseGuard(context, event, 1, 0, 0, 0);
+                            }
+                        }
                     }
                 },
                 LAST_ACK: {
@@ -338,7 +341,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                         RECV_SEGMENT: {
                             target: 'CLOSED',
                             cond: (context, event) => {
-                                return TCPReceiverBaseGuard(context, event);
+                                return TCPReceiverBaseGuard(context, event, 1, 0, 0, 0);
                             }
                         }
                     }
@@ -347,19 +350,8 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
         },
         {
             actions: {
-
             },
             guards: {
-                recvSYN: (context, event) => {
-                    if (!TCPReceiverBaseGuard(context, event)) {
-                        return false;
-                    }
-                    const recvSegment = event.recvSegments[0];
-                    return (
-                        recvSegment.SYN === 1 &&
-                        recvSegment.AckNumber === context.sequenceNumber
-                    );
-                }
             }
         }
     );
