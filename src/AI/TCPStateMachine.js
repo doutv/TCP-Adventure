@@ -18,6 +18,7 @@ const sendSegment = (context, event) => {
         ACK: context.ACK,
         SYN: context.SYN,
         FIN: context.FIN,
+        RST: context.RST,
     }
     let newSequenceNumber = context.sequenceNumber;
     if (context.SYN === 1 || context.FIN === 1) {
@@ -48,7 +49,8 @@ const TCPReceiverBaseGuard = (context, event, ACK = 1, SYN = 0, FIN = 0, RST = 0
         !(recvSegment.destinationPort === context.sourcePort) ||
         !(recvSegment.sequenceNumber >= context.AckNumber) ||
         !(recvSegment.SYN === SYN) ||
-        !(recvSegment.FIN === FIN)
+        !(recvSegment.FIN === FIN) ||
+        !(recvSegment.RST === RST)
     ) {
         return false;
     }
@@ -80,7 +82,18 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                 MSL: MSL, // in ms
                 ACK: 0,
                 SYN: 0,
-                FIN: 0
+                FIN: 0,
+                RST: 0,
+                TIMEOUT: 30000
+            },
+            on: {
+                // Except for SYN_RCVD, any time when receives a RST segment, transition to CLOSED. 
+                RECV_SEGMENT: {
+                    target: 'CLOSED',
+                    cond: (context, event) => {
+                        return event.recvSegments[0].RST === 1;
+                    }
+                }
             },
             states: {
                 CLOSED: {
@@ -149,17 +162,17 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                     },
                 },
                 SYN_RCVD: {
-                    // after: {
-                    //     // TODO
-                    //     // TIMEOUT_SEND_RST
-                    //     30000: {
-                    //         target: 'CLOSED',
-                    //         actions: (context, event) => {
-                    //             Object.assign(context,{ ACK: 0, SYN: 0, FIN: 0, RST: 1 });
-                    //             generateOutputSegment(context, event);
-                    //         }
-                    //     }
-                    // },
+                    after: [{
+                        // TIMEOUT_SEND_RST
+                        delay: (context, event) => {
+                            return context.TIMEOUT;
+                        },
+                        target: 'CLOSED',
+                        actions: (context, event) => {
+                            Object.assign(context, { ACK: 0, SYN: 0, FIN: 0 });
+                            sendSegment(context, event);
+                        }
+                    }],
                     on: {
                         RECV_SEGMENT: [
                             {
@@ -171,9 +184,9 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                             },
                             {
                                 // RECV_RST
-                                target: 'CLOSED',
+                                target: 'LISTEN',
                                 cond: (context, event) => {
-                                    return TCPReceiverBaseGuard(context, event, 1, 0, 0, 1);
+                                    return event.recvSegments[0].RST === 1;
                                 }
                             }
                         ],
@@ -183,10 +196,6 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                                 Object.assign(context, { ACK: 1, SYN: 0, FIN: 1 });
                                 sendSegment(context, event);
                             }
-                        },
-                        RECV_RST: {
-                            // TODO
-                            target: 'LISTEN'
                         }
                     }
                 },

@@ -207,7 +207,6 @@ describe('model-based testing', () => {
         describe(plan.description, () => {
             plan.paths.forEach((path) => {
                 it(path.description, async () => {
-                    // TODO: create a player machine to talk with AI machine
                     const playerMachine = createTCPStateMachine(0, "");
                     const playerService = interpret(playerMachine).onTransition((state) => {
                         if (state.matches('ESTABLISHED')) {
@@ -257,6 +256,7 @@ it('Easy Level', (done) => {
         ACK: 0,
         SYN: 1,
         FIN: 0,
+        RST: 0,
     });
 
     // Player send 2nd handshake segment
@@ -271,6 +271,7 @@ it('Easy Level', (done) => {
             ACK: 1,
             SYN: 1,
             FIN: 0,
+            RST: 0,
         }]
     };
     service.send(event);
@@ -285,6 +286,7 @@ it('Easy Level', (done) => {
         ACK: 1,
         SYN: 0,
         FIN: 0,
+        RST: 0,
     });
 
     // Player send a message to AI
@@ -297,6 +299,7 @@ it('Easy Level', (done) => {
         ACK: 1,
         SYN: 0,
         FIN: 0,
+        RST: 0,
         data: "Hello AI!"
     };
     playerSequenceNumber += getDataSizeInBytes(message.data);
@@ -322,6 +325,7 @@ it('Easy Level', (done) => {
         ACK: 1,
         SYN: 0,
         FIN: 0,
+        RST: 0,
         data: data
     })
     AISequenceNumber += getDataSizeInBytes(data);
@@ -338,6 +342,7 @@ it('Easy Level', (done) => {
         ACK: 1,
         SYN: 0,
         FIN: 1,
+        RST: 0,
     })
 
     // ignore 2nd terminal handshake
@@ -353,6 +358,7 @@ it('Easy Level', (done) => {
             ACK: 1,
             SYN: 0,
             FIN: 1,
+            RST: 0,
         }]
     })
     expect(service.getSnapshot().value).toBe('TIME_WAIT');
@@ -366,6 +372,7 @@ it('Easy Level', (done) => {
         ACK: 1,
         SYN: 0,
         FIN: 0,
+        RST: 0,
     });
 });
 // => 'resolved'
