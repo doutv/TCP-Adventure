@@ -15,6 +15,9 @@ const prettyPrintState = (state) => {
     );
 }
 
+const getOutputSegment = (service) => { return service.getSnapshot().context.outputSegment; }
+const getLastSavedSegment = (service) => { return service.getSnapshot().context.savedSegments[service.getSnapshot().context.savedSegments.length - 1]; }
+
 it('Two Machines talking to each other', async () => {
     const MSL = 100;
     const AIMachine = createTCPStateMachine(3280, 12345, 100, "", MSL);
@@ -25,8 +28,6 @@ it('Two Machines talking to each other', async () => {
     const playerService = interpret(playerMachine).onTransition((state) => {
         prettyPrintState(state);
     });
-    const getOutputSegment = (service) => { return service.getSnapshot().context.outputSegment; }
-    const getLastSavedSegment = (service) => { return service.getSnapshot().context.savedSegments[service.getSnapshot().context.savedSegments.length - 1]; }
     AIService.start();
     playerService.start();
 
@@ -178,53 +179,6 @@ it('Two Machines talking to each other', async () => {
     expect(playerService.getSnapshot().value).toBe("CLOSED");
 });
 
-/*
-describe('model-based testing', () => {
-    const testModel = createModel(AIMachine).withEvents({
-        ACTIVE_OPEN: {
-            exec: (playerService) => {
-                playerService.send({ 'type': 'PASSIVE_OPEN' });
-            }
-        },
-        PASSIVE_OPEN: {
-            exec: (playerService) => {
-                playerService.send({ 'type': 'ACTIVE_OPEN' });
-            }
-        },
-        RECV_SEGMENT: {
-            exec: (playerService) => {
-                playerService.send({ 'type': 'SEND_SYN' });
-            }
-        }
-    });
-    const testPlans = testModel.getShortestPathPlans({
-        filter: (state) => {
-            // console.log(state.value);
-            return state.context.SYN == 1;
-        }
-    });
-    testPlans.forEach((plan) => {
-        describe(plan.description, () => {
-            plan.paths.forEach((path) => {
-                it(path.description, async () => {
-                    const playerMachine = createTCPStateMachine(0, "");
-                    const playerService = interpret(playerMachine).onTransition((state) => {
-                        if (state.matches('ESTABLISHED')) {
-                            done();
-                        }
-                    });
-                    await path.test(playerService);
-                });
-            });
-        });
-    });
-
-    // it('should have full coverage', () => {
-    //     return testModel.testCoverage();
-    // });
-});
-*/
-
 // BDD behavior-driven development
 it('Easy Level', (done) => {
     const MSL = 100;
@@ -375,5 +329,83 @@ it('Easy Level', (done) => {
         RST: 0,
     });
 });
-// => 'resolved'
 
+describe('Test RST flag', () => {
+    it('Test Receive RST', () => {
+        const AIMachine = createTCPStateMachine(3280, 12345, 100, "");
+        const playerMachine = createTCPStateMachine(12345, 3280, 10000, "");
+        const AIService = interpret(AIMachine).onTransition((state) => {
+            prettyPrintState(state);
+        });
+        const playerService = interpret(playerMachine).onTransition((state) => {
+            prettyPrintState(state);
+        });
+        AIService.start();
+        playerService.start();
+
+        // Player send 1st handshake
+        playerService.send({ type: 'ACTIVE_OPEN' });
+        expect(playerService.getSnapshot().value).toBe("SYN_SENT");
+        AIService.send({ type: 'PASSIVE_OPEN' });
+        expect(AIService.getSnapshot().value).toBe("LISTEN");
+        // AI get 1st handshake and send 2nd handshake
+        AIService.send({
+            type: 'RECV_SEGMENT',
+            recvSegments: [getOutputSegment(playerService)]
+        });
+        expect(AIService.getSnapshot().value).toBe("SYN_RCVD");
+
+        // manually send RST to AI and player
+        const RSTSegmentToAI = Object.assign({}, getOutputSegment(playerService));
+        RSTSegmentToAI.RST = 1;
+        const RSTSegmentToPlayer = Object.assign({}, getOutputSegment(AIService));
+        RSTSegmentToPlayer.RST = 1;
+        AIService.send({
+            type: 'RECV_SEGMENT',
+            recvSegments: [RSTSegmentToAI]
+        });
+        expect(AIService.getSnapshot().value).toBe("LISTEN");
+        playerService.send({
+            type: 'RECV_SEGMENT',
+            recvSegments: [RSTSegmentToPlayer]
+        });
+        expect(playerService.getSnapshot().value).toBe("CLOSED");
+    });
+
+    it('RST TIMEOUT', async () => {
+        const TIMEOUT = 200;
+        const MSL = 100;
+        const AIMachine = createTCPStateMachine(3280, 12345, 100, "", MSL, TIMEOUT);
+        const playerMachine = createTCPStateMachine(12345, 3280, 10000, "", MSL, TIMEOUT);
+        const AIService = interpret(AIMachine).onTransition((state) => {
+            prettyPrintState(state);
+        });
+        const playerService = interpret(playerMachine).onTransition((state) => {
+            prettyPrintState(state);
+        });
+        AIService.start();
+        playerService.start()
+
+        // Player send 1st handshake
+        playerService.send({ type: 'ACTIVE_OPEN' });
+        expect(playerService.getSnapshot().value).toBe("SYN_SENT");
+        AIService.send({ type: 'PASSIVE_OPEN' });
+        expect(AIService.getSnapshot().value).toBe("LISTEN");
+        // AI get 1st handshake and send 2nd handshake
+        AIService.send({
+            type: 'RECV_SEGMENT',
+            recvSegments: [getOutputSegment(playerService)]
+        });
+        expect(AIService.getSnapshot().value).toBe("SYN_RCVD");
+        // AI after TIMEOUT send RST
+        await new Promise(r => setTimeout(r, TIMEOUT));
+        expect(AIService.getSnapshot().value).toBe("CLOSED");
+        expect(getOutputSegment(AIService).RST).toEqual(1);
+        // player receive RST
+        playerService.send({
+            type: 'RECV_SEGMENT',
+            recvSegments: [getOutputSegment(AIService)]
+        });
+        expect(playerService.getSnapshot().value).toBe("CLOSED");
+    });
+});

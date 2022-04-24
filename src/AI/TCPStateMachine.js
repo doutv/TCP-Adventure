@@ -64,7 +64,7 @@ const TCPReceiverBaseGuard = (context, event, ACK = 1, SYN = 0, FIN = 0, RST = 0
     return true;
 };
 
-function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, payload, MSL) {
+function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, payload, MSL = 100, TIMEOUT = 30000) {
     return createMachine(
         {
             id: 'TCPMachine',
@@ -84,14 +84,18 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                 SYN: 0,
                 FIN: 0,
                 RST: 0,
-                TIMEOUT: 30000
+                TIMEOUT: TIMEOUT
             },
             on: {
                 // Except for SYN_RCVD, any time when receives a RST segment, transition to CLOSED. 
                 RECV_SEGMENT: {
                     target: 'CLOSED',
                     cond: (context, event) => {
-                        return event.recvSegments[0].RST === 1;
+                        return (
+                            event.recvSegments[0].RST === 1 &&
+                            event.recvSegments[0].sourcePort === context.destinationPort &&
+                            event.recvSegments[0].destinationPort === context.sourcePort
+                        );
                     }
                 }
             },
@@ -169,7 +173,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                         },
                         target: 'CLOSED',
                         actions: (context, event) => {
-                            Object.assign(context, { ACK: 0, SYN: 0, FIN: 0 });
+                            Object.assign(context, { ACK: 0, SYN: 0, FIN: 0, RST: 1 });
                             sendSegment(context, event);
                         }
                     }],
