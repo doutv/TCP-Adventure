@@ -39,19 +39,18 @@ const TCPReceiverBaseGuard = (context, event, ACK = 1, SYN = 0, FIN = 0, RST = 0
     if (!event.hasOwnProperty("recvSegments") || event.recvSegments.length === 0) {
         return false;
     }
-    // TODO: resend
-    // if (recvSegment.AckNumber < context.sequenceNumber)
-    //     return;  
     const recvSegment = event.recvSegments[0];
     if (
         !(recvSegment.ACK === ACK) ||
         !(recvSegment.sourcePort === context.destinationPort) ||
         !(recvSegment.destinationPort === context.sourcePort) ||
-        !(recvSegment.sequenceNumber >= context.AckNumber) ||
         !(recvSegment.SYN === SYN) ||
         !(recvSegment.FIN === FIN) ||
         !(recvSegment.RST === RST)
     ) {
+        return false;
+    }
+    if (recvSegment.ACK === 1 && recvSegment.SYN === 0 && recvSegment.sequenceNumber !== context.AckNumber) {
         return false;
     }
     if (recvSegment.SYN === 1 || recvSegment.FIN === 1) {
@@ -60,7 +59,7 @@ const TCPReceiverBaseGuard = (context, event, ACK = 1, SYN = 0, FIN = 0, RST = 0
     else if (recvSegment.hasOwnProperty('data')) {
         context.AckNumber = recvSegment.sequenceNumber + getDataSizeInBytes(recvSegment.data);
     }
-    context.savedSegments.push(recvSegment); // save segment
+    context.savedSegments.push(recvSegment);
     return true;
 };
 
