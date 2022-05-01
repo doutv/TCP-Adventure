@@ -1,6 +1,5 @@
 import { createTCPStateMachine, getDataSizeInBytes } from './MediumTCPStateMachine';
 import { interpret } from 'xstate';
-import { createModel } from '@xstate/test';
 
 const prettyPrintState = (state) => {
     console.log({

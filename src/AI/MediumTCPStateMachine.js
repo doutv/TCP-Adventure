@@ -117,9 +117,10 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                 SYN_SENT: {
                     after: {
                         // TIMEOUT
-                        30000: {
-                            target: 'CLOSED'
-                        }
+                        delay: (context, event) => {
+                            return context.TIMEOUT;
+                        },
+                        target: 'CLOSED',
                     },
                     on: {
                         // RECV_SYN_ACK_SEND_ACK
