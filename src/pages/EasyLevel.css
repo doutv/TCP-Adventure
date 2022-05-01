@@ -33,6 +33,9 @@
   margin-bottom: 20px;
   animation-duration: 1s;
   animation-name: slideinLeft;
+  display: flex;
+  width: 45%;
+  align-self: flex-end;
 }
 
 @keyframes slideinLeft {
@@ -47,56 +50,59 @@
   }
 }
 .client-message {
+  display: flex;
+  width: 45%;
+  align-self: flex-start;
   margin-bottom: 20px;
   animation-duration: 2s;
   animation-name: slideinRight;
-}
+  }
 
 @keyframes slideinRight {
-  from {
-    margin-left: 100%;
-    width: 200%;
-  }
+from {
+  margin-left: 100%;
+  width: 200%;
+}
 
-  to {
-    margin-left: 0%;
-    width: 100%;
-  }
+to {
+  margin-left: 0%;
+  width: 100%;
+}
 }
 
 .ant-btn {
-  margin: 7px; 
+margin: 7px; 
 
 }
 
 
 
 .ant-btn-default:hover {
-  border: #364957 solid;
-  color:#364957
+border: #364957 solid;
+color:#364957
 }
 .ant-btn-default:focus {
-  border: #364957 solid;
-  color:#364957 
+border: #364957 solid;
+color:#364957 
 }
 
 .send-btn {
-  width:50%;
-  margin-top:10%;
-  margin-left:10%
+width:50%;
+margin-top:10%;
+margin-left:10%
 }
 .send-packet {
-  display: flex;
-  width: 50%;
-  align-self: center;
+display: flex;
+width: 50%;
+align-self: center;
 }
 .send-packet .packet{
-  width: 100% !important;
+width: 100% !important;
 }
 
 
 .ant-modal-confirm-content .packet {
-  width: 100% !important;
+width: 100% !important;
 
 }
 
