@@ -6,6 +6,7 @@ import PlayerInput from "../components/playerInput";
 import React from "react";
 import { useInterpret } from "@xstate/react";
 import BasePacket from "../components/BasePacket"
+
 const prettyPrintState = (state) => {
   console.log({
     state: state.value,
@@ -18,18 +19,11 @@ const prettyPrintState = (state) => {
       state.context["savedSegments"][state.context["savedSegments"].length - 1],
   });
 };
+const getLastOutputSegment = (service) => { return service.getSnapshot().context.outputSegments[service.getSnapshot().context.outputSegments.length - 1]; }
 
-const getOutputSegment = (service) => {
-  return service.getSnapshot().context.outputSegment;
-};
-const getLastSavedSegment = (service) => {
-  return service.getSnapshot().context.savedSegments[
-    service.getSnapshot().context.savedSegments.length - 1
-  ];
-};
 const MediumLevelGame = () => {
   const MSL = 100000;
-  const AIMachine = createTCPStateMachine(3280, 12345, 100, "", MSL);
+  const AIMachine = createTCPStateMachine(3280, 12345, 100, "", MSL, 1e30);
   //   const AIService = interpret(AIMachine).onTransition();
   const service = useInterpret(AIMachine);
   const [historyMes, setHistoryMes] = React.useState([]);

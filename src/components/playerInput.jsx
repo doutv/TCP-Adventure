@@ -3,10 +3,12 @@ import BasePacket from "./BasePacket";
 import React, { useCallback } from "react";
 import $ from "jquery";
 // const RefPacket = React.forwardRef(BasePacket);
-
+const getLastOutputSegment = (service) => { return service.getSnapshot().context.outputSegments[service.getSnapshot().context.outputSegments.length - 1]; }
+const preServiceOutput = {}
 const PlayerInput = (props) => {
   // const clientSeqNumber = props.clientSeqNumber;
   // const ref = React.useRef(null);
+  const preServiceOutputRef = React.useRef(preServiceOutput)
   const { service } = props;
 
     React.useEffect(()=>{
@@ -64,11 +66,11 @@ const PlayerInput = (props) => {
         },
       ];
     const serverState = service.getSnapshot().value; 
-    const serverOutput = service.getSnapshot().context.outputSegment;
-   console.log("snapshot", service.getSnapshot().history.context)
+    const serverOutput = getLastOutputSegment(service);
+   console.log("snapshot", service.getSnapshot().history.context);
     // console.log(serverOutput.history.context)
 
-    if (serverOutput) {
+    if (serverOutput && serverOutput != preServiceOutputRef.current) {
         historyMes = [
             ...historyMes,
             {
@@ -77,6 +79,8 @@ const PlayerInput = (props) => {
             },
           ];
     }
+    preServiceOutputRef.current = getLastOutputSegment(service)
+
 
     props.setHistoryMes([...historyMes]);
     
