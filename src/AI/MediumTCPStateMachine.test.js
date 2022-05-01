@@ -1,4 +1,4 @@
-import { createTCPStateMachine, getDataSizeInBytes } from './TCPStateMachine';
+import { createTCPStateMachine, getDataSizeInBytes } from './MediumTCPStateMachine';
 import { interpret } from 'xstate';
 import { createModel } from '@xstate/test';
 
