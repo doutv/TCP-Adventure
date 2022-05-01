@@ -28,8 +28,8 @@ const sendSegment = (context, event) => {
         newSequenceNumber += getDataSizeInBytes(event.data);
         outputSegment["data"] = event.data;
     }
-    context["sequenceNumber"] = newSequenceNumber;
-    context["outputSegment"] = outputSegment;
+    context.sequenceNumber = newSequenceNumber;
+    context.outputSegments.push(outputSegment);
 }
 
 /**
@@ -76,7 +76,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                 AckNumber: 0,
                 payload: payload,
                 outstandingSegments: [],
-                outputSegment: {},
+                outputSegments: [],
                 savedSegments: [],
                 MSL: MSL, // in ms
                 ACK: 0,
@@ -107,7 +107,6 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                                 // send 1st handshake
                                 Object.assign(context, { ACK: 0, SYN: 1, FIN: 0 });
                                 sendSegment(context, event);
-                                context.outputSegment.AckNumber = 0;
                             }
                         },
                         PASSIVE_OPEN: {

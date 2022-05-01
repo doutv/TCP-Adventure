@@ -9,13 +9,13 @@ const prettyPrintState = (state) => {
         "destinationPort": state.context["destinationPort"],
         "sequenceNumber": state.context["sequenceNumber"],
         "AckNumber": state.context["AckNumber"],
-        "outputSegment": state.context["outputSegment"],
+        "lastOutputSegment": state.context["outputSegments"][state.context["outputSegments"].length - 1],
         "lastSavedSegment": state.context["savedSegments"][state.context["savedSegments"].length - 1]
     }
     );
 }
 
-const getOutputSegment = (service) => { return service.getSnapshot().context.outputSegment; }
+const getLastOutputSegment = (service) => { return service.getSnapshot().context.outputSegments[service.getSnapshot().context.outputSegments.length - 1]; }
 const getLastSavedSegment = (service) => { return service.getSnapshot().context.savedSegments[service.getSnapshot().context.savedSegments.length - 1]; }
 
 it('Two Machines talking to each other', async () => {
@@ -39,17 +39,17 @@ it('Two Machines talking to each other', async () => {
     // AI get 1st handshake and send 2nd handshake
     AIService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(playerService)]
+        recvSegments: [getLastOutputSegment(playerService)]
     });
     expect(AIService.getSnapshot().value).toBe("SYN_RCVD");
     // Player get 2nd handshake and send 3rd handshake
     playerService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(AIService)]
+        recvSegments: [getLastOutputSegment(AIService)]
     });
     AIService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(playerService)]
+        recvSegments: [getLastOutputSegment(playerService)]
     });
     expect(AIService.getSnapshot().value).toBe('ESTABLISHED');
     expect(playerService.getSnapshot().value).toBe('ESTABLISHED');
@@ -62,17 +62,17 @@ it('Two Machines talking to each other', async () => {
     });
     AIService.send({
         type: "RECV_SEGMENT",
-        recvSegments: [getOutputSegment(playerService)]
+        recvSegments: [getLastOutputSegment(playerService)]
     });
     expect(getLastSavedSegment(AIService))
-        .toEqual(getOutputSegment(playerService));
+        .toEqual(getLastOutputSegment(playerService));
     // AI ---ACK---> player
     playerService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(AIService)]
+        recvSegments: [getLastOutputSegment(AIService)]
     });
     expect(getLastSavedSegment(playerService))
-        .toEqual(getOutputSegment(AIService));
+        .toEqual(getLastOutputSegment(AIService));
 
     // Round 2: AI -> player
     AIService.send({
@@ -81,29 +81,29 @@ it('Two Machines talking to each other', async () => {
     });
     playerService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(AIService)]
+        recvSegments: [getLastOutputSegment(AIService)]
     });
     expect(getLastSavedSegment(playerService))
-        .toEqual(getOutputSegment(AIService));
+        .toEqual(getLastOutputSegment(AIService));
     // player ---ACK---> AI
     AIService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(playerService)]
+        recvSegments: [getLastOutputSegment(playerService)]
     });
     expect(getLastSavedSegment(AIService))
-        .toEqual(getOutputSegment(playerService));
+        .toEqual(getLastOutputSegment(playerService));
 
     // AI send an old segment to player
-    const oldAISend = Object.assign({}, getOutputSegment(AIService)); // shallow copy
+    const oldAISend = Object.assign({}, getLastOutputSegment(AIService)); // shallow copy
     oldAISend.data = "Old data, should not be saved";
-    const lastPlayerOutput = Object.assign({}, getOutputSegment(playerService));
+    const lastPlayerOutput = Object.assign({}, getLastOutputSegment(playerService));
     playerService.send({
         type: 'RECV_SEGMENT',
         recvSegments: [oldAISend]
     });
     expect(getLastSavedSegment(playerService)).not.toEqual(oldAISend);
     // player should not respond to this old segment
-    expect(getOutputSegment(playerService)).toEqual(lastPlayerOutput);
+    expect(getLastOutputSegment(playerService)).toEqual(lastPlayerOutput);
 
     // Connection termination 4-way handshake
     // player send FIN
@@ -114,13 +114,13 @@ it('Two Machines talking to each other', async () => {
     // AI receive FIN and send ACK
     AIService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(playerService)]
+        recvSegments: [getLastOutputSegment(playerService)]
     });
     expect(AIService.getSnapshot().value).toBe("CLOSE_WAIT");
     // player receive ACK
     playerService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(AIService)]
+        recvSegments: [getLastOutputSegment(AIService)]
     });
     expect(playerService.getSnapshot().value).toBe("FIN_WAIT_2");
 
@@ -131,15 +131,15 @@ it('Two Machines talking to each other', async () => {
     });
     playerService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(AIService)]
+        recvSegments: [getLastOutputSegment(AIService)]
     });
     expect(getLastSavedSegment(playerService))
-        .toEqual(getOutputSegment(AIService));
+        .toEqual(getLastOutputSegment(AIService));
     AIService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(playerService)]
+        recvSegments: [getLastOutputSegment(playerService)]
     });
-    expect(getLastSavedSegment(AIService)).toEqual(getOutputSegment(playerService));
+    expect(getLastSavedSegment(AIService)).toEqual(getLastOutputSegment(playerService));
 
     AIService.send({
         type: 'SEND_DATA',
@@ -147,15 +147,15 @@ it('Two Machines talking to each other', async () => {
     });
     playerService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(AIService)]
+        recvSegments: [getLastOutputSegment(AIService)]
     });
     expect(getLastSavedSegment(playerService))
-        .toEqual(getOutputSegment(AIService));
+        .toEqual(getLastOutputSegment(AIService));
     AIService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(playerService)]
+        recvSegments: [getLastOutputSegment(playerService)]
     });
-    expect(getLastSavedSegment(AIService)).toEqual(getOutputSegment(playerService));
+    expect(getLastSavedSegment(AIService)).toEqual(getLastOutputSegment(playerService));
 
     // AI send FIN
     AIService.send({
@@ -165,12 +165,12 @@ it('Two Machines talking to each other', async () => {
     // player send ACK
     playerService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(AIService)]
+        recvSegments: [getLastOutputSegment(AIService)]
     });
     // AI receive ACK
     AIService.send({
         type: 'RECV_SEGMENT',
-        recvSegments: [getOutputSegment(playerService)]
+        recvSegments: [getLastOutputSegment(playerService)]
     });
     expect(AIService.getSnapshot().value).toBe("CLOSED");
     // player wait 2MSL from TIME_WAIT to CLOSED
@@ -201,7 +201,7 @@ it('Easy Level', (done) => {
 
     // AI send 1st handshake segment
     service.send({ type: 'ACTIVE_OPEN' });
-    expect(service.getSnapshot().context.outputSegment).toEqual({
+    expect(getLastOutputSegment(service)).toEqual({
         sourcePort: AIPort,
         destinationPort: playerPort,
         sequenceNumber: AISequenceNumber++,
@@ -231,7 +231,7 @@ it('Easy Level', (done) => {
     service.send(event);
 
     // AI send 3rd handshake segment
-    expect(service.getSnapshot().context.outputSegment).toEqual({
+    expect(getLastOutputSegment(service)).toEqual({
         sourcePort: AIPort,
         destinationPort: playerPort,
         sequenceNumber: AISequenceNumber,
@@ -270,7 +270,7 @@ it('Easy Level', (done) => {
         type: 'SEND_DATA',
         data: data
     })
-    expect(service.getSnapshot().context.outputSegment).toEqual({
+    expect(getLastOutputSegment(service)).toEqual({
         sourcePort: AIPort,
         destinationPort: playerPort,
         sequenceNumber: AISequenceNumber,
@@ -287,7 +287,7 @@ it('Easy Level', (done) => {
     // AI send 1st terminal handshake
     service.send({ type: 'SEND_FIN' });
     expect(service.getSnapshot().value).toBe('FIN_WAIT_1');
-    expect(service.getSnapshot().context.outputSegment).toEqual({
+    expect(getLastOutputSegment(service)).toEqual({
         sourcePort: AIPort,
         destinationPort: playerPort,
         sequenceNumber: AISequenceNumber++,
@@ -317,7 +317,7 @@ it('Easy Level', (done) => {
     })
     expect(service.getSnapshot().value).toBe('TIME_WAIT');
     // AI send 4th terminal handshake
-    expect(service.getSnapshot().context.outputSegment).toEqual({
+    expect(getLastOutputSegment(service)).toEqual({
         sourcePort: AIPort,
         destinationPort: playerPort,
         sequenceNumber: AISequenceNumber,
@@ -351,14 +351,14 @@ describe('Test RST flag', () => {
         // AI get 1st handshake and send 2nd handshake
         AIService.send({
             type: 'RECV_SEGMENT',
-            recvSegments: [getOutputSegment(playerService)]
+            recvSegments: [getLastOutputSegment(playerService)]
         });
         expect(AIService.getSnapshot().value).toBe("SYN_RCVD");
 
         // manually send RST to AI and player
-        const RSTSegmentToAI = Object.assign({}, getOutputSegment(playerService));
+        const RSTSegmentToAI = Object.assign({}, getLastOutputSegment(playerService));
         RSTSegmentToAI.RST = 1;
-        const RSTSegmentToPlayer = Object.assign({}, getOutputSegment(AIService));
+        const RSTSegmentToPlayer = Object.assign({}, getLastOutputSegment(AIService));
         RSTSegmentToPlayer.RST = 1;
         AIService.send({
             type: 'RECV_SEGMENT',
@@ -394,17 +394,17 @@ describe('Test RST flag', () => {
         // AI get 1st handshake and send 2nd handshake
         AIService.send({
             type: 'RECV_SEGMENT',
-            recvSegments: [getOutputSegment(playerService)]
+            recvSegments: [getLastOutputSegment(playerService)]
         });
         expect(AIService.getSnapshot().value).toBe("SYN_RCVD");
         // AI after TIMEOUT send RST
         await new Promise(r => setTimeout(r, TIMEOUT));
         expect(AIService.getSnapshot().value).toBe("CLOSED");
-        expect(getOutputSegment(AIService).RST).toEqual(1);
+        expect(getLastOutputSegment(AIService).RST).toEqual(1);
         // player receive RST
         playerService.send({
             type: 'RECV_SEGMENT',
-            recvSegments: [getOutputSegment(AIService)]
+            recvSegments: [getLastOutputSegment(AIService)]
         });
         expect(playerService.getSnapshot().value).toBe("CLOSED");
     });
