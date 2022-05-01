@@ -5,10 +5,13 @@ import $ from "jquery";
 // const RefPacket = React.forwardRef(BasePacket);
 const getOutputSegmentsFromIdx = (service, idx) => { return service.getSnapshot().context.outputSegments.slice(idx); }
 const serviceOutputIdx = 0;
+const serviceLastState = "";
+const serviceSendData = "Hello Player! Remember my port number is 3280, and I always try to send messages to you through your port 12345"
 const PlayerInput = (props) => {
     // const clientSeqNumber = props.clientSeqNumber;
     // const ref = React.useRef(null);
     const serviceOutputIdxRef = React.useRef(serviceOutputIdx)
+    const serviceLastStateRef = React.useRef(serviceLastState)
     const { service } = props;
 
     React.useEffect(() => {
@@ -16,8 +19,7 @@ const PlayerInput = (props) => {
     }, [service])
 
     const send = () => {
-        console.log("send packet");
-        // console.log(RefPacket)
+        // PLayer send segment
         const sourcePort = parseInt($(".send-packet #source-port")[0].value);
         const sequenceNumber = parseInt($(".send-packet #seq-number")[0].value);
         const destinationPort = parseInt(
@@ -29,7 +31,6 @@ const PlayerInput = (props) => {
         const FIN = parseInt($(".send-packet #FIN")[0].value);
         const RST = parseInt($(".send-packet #RST")[0].value);
         const data = $(".send-packet #data")[0].value;
-
         const event = {
             type: "RECV_SEGMENT",
             recvSegments: [
@@ -46,8 +47,6 @@ const PlayerInput = (props) => {
                 },
             ],
         };
-        // const prevServerState = service.getSnapshot().value();
-        service.send(event);
         let historyMes = props.historyMes
         historyMes = [
             ...historyMes,
@@ -64,8 +63,17 @@ const PlayerInput = (props) => {
                 isClientMes: false,
             },
         ];
+
+        // AI receive and send
+        service.send(event);
         const serverState = service.getSnapshot().value;
-        if (serverState == "CLOSE_WAIT") {
+        if (serviceOutputIdxRef.current !== "ESTABLISHED" && serverState === "ESTABLISHED") {
+            service.send({
+                type: "SEND_DATA",
+                data: serviceSendData
+            })
+        }
+        if (serverState === "CLOSE_WAIT") {
             service.send({ type: "SEND_FIN" });
         }
         const serverOutputs = getOutputSegmentsFromIdx(service, serviceOutputIdxRef.current);
@@ -79,6 +87,7 @@ const PlayerInput = (props) => {
                 ...serverOutputs,
             ];
         }
+        serviceLastStateRef.current = service.getSnapshot().value;
         serviceOutputIdxRef.current = service.getSnapshot().context.outputSegments.length;
         props.setHistoryMes([...historyMes]);
     };

@@ -24,7 +24,12 @@ const AIMachine = createTCPStateMachine(3280, 12345, 100, "", 1e6, 1e6);
 const MediumLevelGame = () => {
     const service = useInterpret(AIMachine, {}, (state) => {
         prettyPrintState(state);
+        // update status bar
     });
+    // const AIState = useSelector(
+    //     service,
+    //     (state) => state.value
+    // );
     const [historyMes, setHistoryMes] = React.useState([]);
     // add auto scroll to bottom
     const messagesEndRef = React.useRef(null);
