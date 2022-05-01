@@ -3,7 +3,7 @@ import React from "react";
 const PackBox = (props) => {
   return (
     <div style={{ display: "flex" }}>
-      <Tag color={"#465c6a"}>{props.name}</Tag>
+      <Tag color={"#465c6a"} style={{marginLeft: "5px"}}>{props.name}</Tag>
       <Input
         id={props.id}
         disabled={props.inputDisable}
@@ -32,6 +32,9 @@ const BasePacket = (props) => {
   const [ACK, setACK] = React.useState(props.ACK);
   const [SYN, setSYN] = React.useState(props.SYN);
   const [FIN, setFIN] = React.useState(props.FIN);
+  const [RST, setRST] = React.useState(props.RST);
+  const [data, setData] = React.useState(props.data)
+  const {showRST, showData} = props
   return (
     <div
       className="packet"
@@ -85,8 +88,8 @@ const BasePacket = (props) => {
       </Row>
       <Divider />
 
-      <Row gutter={[16, 16]}>
-        <Col span={8}>
+      <Row style={{flexWrap: "nowrap"}}>
+        <Col>
           {" "}
           <PackBox
             name="ACK"
@@ -96,7 +99,7 @@ const BasePacket = (props) => {
             id="ACK"
           />
         </Col>
-        <Col span={8}>
+        <Col >
           <PackBox
             name="SYN"
             inputDisable={inputDisable}
@@ -105,7 +108,7 @@ const BasePacket = (props) => {
             id="SYN"
           />
         </Col>
-        <Col span={8}>
+        <Col >
           <PackBox
             name="FIN"
             inputDisable={inputDisable}
@@ -114,14 +117,25 @@ const BasePacket = (props) => {
             id="FIN"
           />
         </Col>
+        {props.RST !== undefined|| showRST ? 
+            <Col >
+              <PackBox
+                name="RST"
+                inputDisable={inputDisable}
+                value={RST}
+                setValue={setRST}
+                id="RST"
+              />
+            </Col>: " "}
       </Row>
-      {props.data ? <Divider /> : ""}
-      {props.data ? (
+      {props.data !==undefined || showData ? <Divider /> : ""}
+      {props.data !==undefined || showData ? (
         <Row>
           <PackBox
             name="DATA"
             id="data"
             value={props.data}
+            setValue={setData}
             inputDisable={inputDisable}
           />
         </Row>
