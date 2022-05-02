@@ -179,16 +179,13 @@ it('Two Machines talking to each other', async () => {
 });
 
 // BDD behavior-driven development
-it('Easy Level', (done) => {
+it('Easy Level', () => {
     const MSL = 100;
     const AIMachine = createTCPStateMachine(3280, 12345, 100, "", MSL);
     const service = interpret(AIMachine).onTransition((state) => {
         // this is where you expect the state to eventually
         // be reached
-        console.log(state.value, state.context);
-        if (state.matches('CLOSED')) {
-            done();
-        }
+        prettyPrintState(state);
     });
 
     service.start();
