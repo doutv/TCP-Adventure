@@ -12,10 +12,10 @@ const SendPacket = (props) => {
     ACKError: "ACK ERROR",
     SYNError: "SYN ERROR",
     FINError: "FIN ERROR",
-    AckNumberError: "ACKNOWLEDGE NUMBER ERROR",
-    sourcePortError: "SOURCE PORT ERROR",
-    sequenceNumberError: "SEQUENCE NUMBER ERROR",
-    destinationPortError: "DESTINATION PORT ERROR",
+    AckNumberError: "Acknowledgement Number ERROR",
+    sourcePortError: "Source Port ERROR",
+    sequenceNumberError: "Sequence Number ERROR",
+    destinationPortError: "Destination Port ERROR",
   };
   return (
     <div className="send-packet">

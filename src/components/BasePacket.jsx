@@ -25,7 +25,7 @@ const MultiLinePackBox = (props) => {
             </Col>
             <Col flex="auto">
                 <TextArea showCount
-                    maxLength={1000}
+                    maxLength={1500}
                     id={props.id}
                     disabled={props.inputDisable}
                     value={props.value}

@@ -25,12 +25,12 @@ const StateHeader = (props, ref) => {
     <div className="state-header">
       <h1>State:{" "}
         {state === ThreeHandShakeState
-          ? "Connection is establishing ... "
+          ? "Connection Establishment"
           : state === FlowControlState
-            ? "Connection established, data transmitting ..."
+            ? "Data Transmission"
             : state === FourHandShakeState
-              ? "Finish data transmission"
-              : "TCP Closed"}</h1>
+              ? "Connection Termination"
+              : "Closed"}</h1>
 
       <Badge
         dot={props.newMessComing}

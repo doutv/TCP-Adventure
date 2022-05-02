@@ -13,7 +13,7 @@ import {
 } from "../components/text";
 import $ from "jquery";
 import EasyLevelSteps from "../components/Steps";
-import { Steps, Hints } from "intro.js-react";
+import { Steps } from "intro.js-react";
 
 function getRandomNumber(max) {
     return Math.floor(Math.random() * max);
@@ -37,7 +37,7 @@ const stepsForBeginner = {
     steps: [
         {
             element: ".state-header h1",
-            intro: "TCP state",
+            intro: "TCP state of the other side",
             position: "bottom",
         },
         {
@@ -46,7 +46,7 @@ const stepsForBeginner = {
         },
         {
             element: ".open-progress",
-            intro: "Your current progress and suggestion.",
+            intro: "Your current progress",
         },
     ],
 };
@@ -212,7 +212,7 @@ function EasyLevelGame() {
             ClientPackets[order]();
             setTimeout(scrollToBottom, 1000);
         }
-    }, [timer]);
+    }, [timer]); // eslint-disable-line
     React.useEffect(() => {
         scrollToBottom();
     }, [historyMes]);
@@ -314,7 +314,7 @@ function EasyLevelGame() {
                 ) : (
                     ""
                 )}
-                {state == stateConfig.Finished ? (
+                {state === stateConfig.Finished ? (
                     <Result
                         status="success"
                         title="Well Done! You have successfully complete the TCP job!"
