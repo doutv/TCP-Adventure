@@ -48,6 +48,15 @@ const stepsForBeginner = {
             element: ".open-progress",
             intro: "Your current progress",
         },
+        {
+            element: ".info-container",
+            intro: "Client Sends a Packet to You!",
+        },
+        {
+            element: ".send-packet-container",
+            intro: "You should response to the client! Try to complete the packet and send it to the client.",
+            position: "right"
+        }
     ],
 };
 function EasyLevelGame() {
@@ -299,6 +308,7 @@ function EasyLevelGame() {
                     })}
                     <div ref={messagesEndRef}></div>
                 </div>
+                <div className="send-packet-container">
                 {sendPacketVisible ? (
                     <SendPacket
                         sourcePort={serverPort}
@@ -314,6 +324,8 @@ function EasyLevelGame() {
                 ) : (
                     ""
                 )}
+                </div>
+               
                 {state === stateConfig.Finished ? (
                     <Result
                         status="success"
