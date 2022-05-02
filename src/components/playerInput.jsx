@@ -3,7 +3,7 @@ import BasePacket from "./BasePacket";
 import React, { useCallback } from "react";
 import $ from "jquery";
 // const RefPacket = React.forwardRef(BasePacket);
-const getOutputSegmentsFromIdx = (service, idx) => { return service.getSnapshot().context.outputSegments.slice(idx); }
+const getOutputSegmentsFromIdx = (service, idx) => service.getSnapshot().context.outputSegments.slice(idx);
 const serviceOutputIdx = 0;
 const serviceLastState = "";
 const MediumPlayerInput = (props) => {
@@ -13,11 +13,7 @@ const MediumPlayerInput = (props) => {
     const serviceLastStateRef = React.useRef(serviceLastState)
     const { service } = props;
 
-    React.useEffect(() => {
-
-    }, [service])
-
-    const send = () => {
+    const playerSend = () => {
         // PLayer send segment
         const sourcePort = parseInt($(".send-packet #source-port")[0].value);
         const sequenceNumber = parseInt($(".send-packet #seq-number")[0].value);
@@ -66,7 +62,7 @@ const MediumPlayerInput = (props) => {
         // AI receive and send
         service.send(event);
         const serverState = service.getSnapshot().value;
-        if (serviceOutputIdxRef.current !== "ESTABLISHED" && serverState === "ESTABLISHED") {
+        if (serviceLastStateRef.current === "SYN_RCVD" && serverState === "ESTABLISHED") {
             service.send({
                 type: "SEND_DATA",
                 data: "Hello! Remember my port number is 3280, and I always try to send messages to you through your port 12345."
@@ -94,7 +90,7 @@ const MediumPlayerInput = (props) => {
     return (
         <div className="send-packet">
             <BasePacket {...props} showRST showData inputDisable={false} />
-            <Button className="send-btn" onClick={send}>
+            <Button className="send-btn" onClick={playerSend}>
                 Send!
             </Button>
         </div>
