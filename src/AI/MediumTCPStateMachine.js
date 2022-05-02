@@ -50,8 +50,11 @@ const TCPReceiverBaseGuard = (context, event, ACK = 1, SYN = 0, FIN = 0, RST = 0
     ) {
         return false;
     }
-    if (recvSegment.ACK === 1 && recvSegment.SYN === 0 && recvSegment.sequenceNumber !== context.AckNumber) {
-        return false;
+    if (recvSegment.ACK === 1 && recvSegment.SYN === 0) {
+        if (recvSegment.AckNumber !== context.sequenceNumber)
+            return false;
+        if (recvSegment.sequenceNumber !== context.AckNumber)
+            return false;
     }
     if (recvSegment.SYN === 1 || recvSegment.FIN === 1) {
         context.AckNumber = recvSegment.sequenceNumber + 1;
@@ -115,13 +118,15 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                     },
                 },
                 SYN_SENT: {
-                    after: {
-                        // TIMEOUT
-                        delay: (context, event) => {
-                            return context.TIMEOUT;
-                        },
-                        target: 'CLOSED',
-                    },
+                    after: [
+                        {
+                            // TIMEOUT
+                            delay: (context, event) => {
+                                return context.TIMEOUT;
+                            },
+                            target: 'CLOSED',
+                        }
+                    ],
                     on: {
                         // RECV_SYN_ACK_SEND_ACK
                         RECV_SEGMENT: {
@@ -165,17 +170,19 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                     },
                 },
                 SYN_RCVD: {
-                    after: [{
-                        // TIMEOUT_SEND_RST
-                        delay: (context, event) => {
-                            return context.TIMEOUT;
-                        },
-                        target: 'CLOSED',
-                        actions: (context, event) => {
-                            Object.assign(context, { ACK: 0, SYN: 0, FIN: 0, RST: 1 });
-                            sendSegment(context, event);
+                    after: [
+                        {
+                            // TIMEOUT_SEND_RST
+                            delay: (context, event) => {
+                                return context.TIMEOUT;
+                            },
+                            target: 'CLOSED',
+                            actions: (context, event) => {
+                                Object.assign(context, { ACK: 0, SYN: 0, FIN: 0, RST: 1 });
+                                sendSegment(context, event);
+                            }
                         }
-                    }],
+                    ],
                     on: {
                         RECV_SEGMENT: [
                             {
