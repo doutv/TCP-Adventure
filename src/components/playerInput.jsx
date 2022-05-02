@@ -6,8 +6,7 @@ import $ from "jquery";
 const getOutputSegmentsFromIdx = (service, idx) => { return service.getSnapshot().context.outputSegments.slice(idx); }
 const serviceOutputIdx = 0;
 const serviceLastState = "";
-const serviceSendData = "Hello Player! Remember my port number is 3280, and I always try to send messages to you through your port 12345"
-const PlayerInput = (props) => {
+const MediumPlayerInput = (props) => {
     // const clientSeqNumber = props.clientSeqNumber;
     // const ref = React.useRef(null);
     const serviceOutputIdxRef = React.useRef(serviceOutputIdx)
@@ -70,7 +69,7 @@ const PlayerInput = (props) => {
         if (serviceOutputIdxRef.current !== "ESTABLISHED" && serverState === "ESTABLISHED") {
             service.send({
                 type: "SEND_DATA",
-                data: serviceSendData
+                data: "Hello! Remember my port number is 3280, and I always try to send messages to you through your port 12345."
             })
         }
         if (serverState === "CLOSE_WAIT") {
@@ -102,4 +101,4 @@ const PlayerInput = (props) => {
     );
 };
 
-export default PlayerInput;
+export default MediumPlayerInput;

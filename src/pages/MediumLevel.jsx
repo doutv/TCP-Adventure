@@ -1,10 +1,7 @@
-import {
-    createTCPStateMachine,
-    getDataSizeInBytes,
-} from "../AI/MediumTCPStateMachine";
-import PlayerInput from "../components/playerInput";
+import { createTCPStateMachine } from "../AI/MediumTCPStateMachine";
+import MediumPlayerInput from "../components/playerInput";
 import React from "react";
-import { useInterpret } from "@xstate/react";
+import { useInterpret, useSelector } from "@xstate/react";
 import BasePacket from "../components/BasePacket"
 
 const prettyPrintState = (state) => {
@@ -16,36 +13,46 @@ const prettyPrintState = (state) => {
         "AckNumber": state.context["AckNumber"],
         "lastOutputSegment": state.context["outputSegments"][state.context["outputSegments"].length - 1],
         "lastSavedSegment": state.context["savedSegments"][state.context["savedSegments"].length - 1]
-    }
-    );
+    });
 };
-const AIMachine = createTCPStateMachine(3280, 12345, 100, "", 1e6, 1e6);
+const getRandomNumber = (max) => Math.floor(Math.random() * max);
+const AIPort = 3280;
+const playerPort = 12345;
+const AISequenceNumber = getRandomNumber(1e6);
+const AIMachine = createTCPStateMachine(AIPort, playerPort, AISequenceNumber, "", 1e6, 1e6);
 
+const AIStateHeader = (props) => {
+    const service = props.service;
+    const AIState = useSelector(service, (state) => state.value);
+    return (
+        <div className="state-header">
+            <h1>State: {AIState}</h1>
+        </div>
+    )
+}
 const MediumLevelGame = () => {
     const service = useInterpret(AIMachine, {}, (state) => {
         prettyPrintState(state);
-        // update status bar
     });
-    // const AIState = useSelector(
-    //     service,
-    //     (state) => state.value
-    // );
     const [historyMes, setHistoryMes] = React.useState([]);
-    // add auto scroll to bottom
     const messagesEndRef = React.useRef(null);
-
     const scrollToBottom = () => {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     };
+    React.useEffect(() => {
+        scrollToBottom();
+    }, [historyMes]);
 
     React.useEffect(() => {
         service.start();
         service.send({ type: "PASSIVE_OPEN" });
-        console.log(service.getSnapshot().value);
     }, []);
 
     return (
         <div className="medium-level-game">
+            <AIStateHeader
+                service={service}
+            />
             <div className="container">
                 <div className="info-container">
                     {historyMes.map((ele) => {
@@ -73,10 +80,10 @@ const MediumLevelGame = () => {
                     })}
                     <div ref={messagesEndRef}></div>
                 </div>
-                <PlayerInput
+                <MediumPlayerInput
                     service={service}
-                    sourcePort={12345}
-                    destinationPort={3280}
+                    sourcePort={playerPort}
+                    destinationPort={AIPort}
                     setHistoryMes={setHistoryMes}
                     historyMes={historyMes}
                 />
