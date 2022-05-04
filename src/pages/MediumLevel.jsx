@@ -3,6 +3,10 @@ import MediumPlayerInput from "../components/playerInput";
 import React from "react";
 import { useInterpret, useSelector } from "@xstate/react";
 import BasePacket from "../components/BasePacket"
+import { MediumLevelManual } from "../components/text"
+import { Modal } from "antd";
+import { QuestionCircleOutlined } from "@ant-design/icons";
+import '../components/StateHeader.css'
 
 const prettyPrintState = (state) => {
     console.log({
@@ -21,15 +25,30 @@ const playerPort = 12345;
 const AISequenceNumber = getRandomNumber(1e6);
 const AIMachine = createTCPStateMachine(AIPort, playerPort, AISequenceNumber, "", 1e6, 1e6);
 
-const AIStateHeader = (props) => {
+const Header = (props) => {
     const service = props.service;
     const AIState = useSelector(service, (state) => state.value);
     return (
         <div className="state-header">
             <h1>State: {AIState}</h1>
+            <QuestionCircleOutlined
+                className="help-notification"
+                style={{
+                    fontSize: "40px", color: "white"
+                }}
+                onClick={() => {
+                    Modal.confirm({
+                        width: "800px",
+                        cancelText: () => { },
+                        title: "Tips",
+                        content: <MediumLevelManual />,
+                    });
+                }}
+            />
         </div>
     )
 }
+
 const MediumLevelGame = () => {
     const service = useInterpret(AIMachine, {}, (state) => {
         prettyPrintState(state);
@@ -50,7 +69,7 @@ const MediumLevelGame = () => {
 
     return (
         <div className="medium-level-game">
-            <AIStateHeader
+            <Header
                 service={service}
             />
             <div className="container">
