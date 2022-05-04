@@ -48,6 +48,15 @@ const stepsForBeginner = {
             element: ".open-progress",
             intro: "Your Task",
         },
+        {
+            element: ".info-container",
+            intro: "Someone sends a segment to you",
+        },
+        {
+            element: ".send-packet-container",
+            intro: "Send segments here",
+            position: "right"
+        }
     ],
 };
 function EasyLevelGame() {
@@ -299,21 +308,24 @@ function EasyLevelGame() {
                     })}
                     <div ref={messagesEndRef}></div>
                 </div>
-                {sendPacketVisible ? (
-                    <SendPacket
-                        sourcePort={serverPort}
-                        destinationPort={clientPort}
-                        correctCheck={serverPackConfigs[timer]}
-                        historyMes={historyMes}
-                        setHistoryMes={setHistoryMes}
-                        sequenceNumber={INIT_SERVER_SEQ}
-                        inputDisable={false}
-                        timer={timer}
-                        setTimer={setTimer}
-                    />
-                ) : (
-                    ""
-                )}
+                <div className="send-packet-container">
+                    {sendPacketVisible ? (
+                        <SendPacket
+                            sourcePort={serverPort}
+                            destinationPort={clientPort}
+                            correctCheck={serverPackConfigs[timer]}
+                            historyMes={historyMes}
+                            setHistoryMes={setHistoryMes}
+                            sequenceNumber={INIT_SERVER_SEQ}
+                            inputDisable={false}
+                            timer={timer}
+                            setTimer={setTimer}
+                        />
+                    ) : (
+                        ""
+                    )}
+                </div>
+
                 {state === stateConfig.Finished ? (
                     <Result
                         status="success"

@@ -104,7 +104,7 @@ const SendPacket = (props) => {
           }
         }}
       >
-        Send!
+        Send
       </Button>
     </div>
   );
