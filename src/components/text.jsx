@@ -19,12 +19,10 @@ const BackgroundMessage = () => (
 
 const EasyLevelManual = (props) => (
   <div className="easy-level-manual">
-    <h2>Easy Level</h2>
     <p>
       In this level, a mysterious person will send you a survival manual to help
       you.
       You should send proper TCP segments to complete a TCP connection.
-      You are not required to send any messages to the mysterious person.
     </p>
     <p>
       You will go through three TCP phases:

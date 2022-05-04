@@ -37,7 +37,7 @@ const stepsForBeginner = {
     steps: [
         {
             element: ".state-header h1",
-            intro: "TCP state of the other side",
+            intro: "TCP State Bar",
             position: "bottom",
         },
         {
@@ -46,7 +46,7 @@ const stepsForBeginner = {
         },
         {
             element: ".open-progress",
-            intro: "Your current progress",
+            intro: "Your Task",
         },
     ],
 };
@@ -250,7 +250,7 @@ function EasyLevelGame() {
                 cancelText={() => { }}
                 onOk={closeInfoModal}
                 visible={showInfoModal}
-                title="Welcome to TCP Easy Level Game!"
+                title="Easy Level"
             >
                 <EasyLevelManual />
             </Modal>
