@@ -10,7 +10,6 @@ const PackBox = (props) => {
                 disabled={props.inputDisable}
                 value={props.value}
                 onChange={(e) => {
-                    //   console.log(e);
                     props.setValue(e.target.value);
                 }}
             />
