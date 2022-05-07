@@ -1,5 +1,5 @@
 import { createTCPStateMachine } from "../AI/MediumTCPStateMachine";
-import MediumPlayerInput from "../components/playerInput";
+import MediumPlayerInput from "../components/MediumPlayerInput";
 import React from "react";
 import { useInterpret, useSelector } from "@xstate/react";
 import BasePacket from "../components/BasePacket"

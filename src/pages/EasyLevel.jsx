@@ -5,7 +5,7 @@ import { SoundOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { Modal, Result, Button, notification, Badge, Divider } from "antd";
 import BasePacket from "../components/BasePacket";
-import SendPacket from "../components/sendPacket";
+import SendPacket from "../components/EasySendPacket";
 import {
     EasyLevelFirstTaskDescription,
     EasyLevelManual,
