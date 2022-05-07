@@ -1,5 +1,6 @@
-import { getDataSizeInBytes } from "../AI/MediumTCPStateMachine"
-import { Statistic, Row, Col } from 'antd';
+import * as React from "react";
+import { getDataSizeInBytes } from "../AI/MediumTCPStateMachine";
+import { Statistic, Row, Col } from "antd";
 
 const PlayerStatistics = (props) => {
     const { historyMsgs, AISavedSegmentsLength } = props;
