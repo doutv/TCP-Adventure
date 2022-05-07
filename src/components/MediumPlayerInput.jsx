@@ -63,6 +63,9 @@ const MediumPlayerInput = (props) => {
         if (data) {
             let respondData = "";
             switch (data) {
+                case "What's your name?":
+                    respondData = "My name is Vint Bob";
+                    break;
                 case "How can I contact you?":
                     respondData = "Remember my port number is 3280, and I always send segments through your port 12345.";
                     break;

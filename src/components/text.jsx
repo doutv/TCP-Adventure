@@ -121,6 +121,7 @@ const MediumLevelManual = () => {
                 <ul>
                     <li>How can I contact you?</li>
                     <li>If I receive other segments, what should I do?</li>
+                    <li>What's your name?</li>
                 </ul>
             </h3>
         </div>
