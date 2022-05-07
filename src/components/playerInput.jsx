@@ -7,8 +7,6 @@ const getOutputSegmentsFromIdx = (service, idx) => service.getSnapshot().context
 const serviceOutputIdx = 0;
 const serviceLastState = "";
 const MediumPlayerInput = (props) => {
-    // const clientSeqNumber = props.clientSeqNumber;
-    // const ref = React.useRef(null);
     const serviceOutputIdxRef = React.useRef(serviceOutputIdx)
     const serviceLastStateRef = React.useRef(serviceLastState)
     const { service } = props;

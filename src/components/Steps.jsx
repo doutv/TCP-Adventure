@@ -12,9 +12,9 @@ const EasyLevelSteps = (props) => {
   const [drawer, setDrawer] = React.useState(false);
   return (
     <div className="easy-level step-drawer">
-      <Tooltip title="Tasks">
+      <Tooltip title="Missions">
         <ForwardOutlined
-        className="open-progress"
+          className="open-progress"
           style={{
             fontSize: "40px",
             position: "fixed",
@@ -30,7 +30,7 @@ const EasyLevelSteps = (props) => {
       </Tooltip>
 
       <Drawer
-        title="Progress"
+        title="Missions"
         onClose={() => {
           setDrawer(false);
         }}
@@ -39,11 +39,9 @@ const EasyLevelSteps = (props) => {
       >
         <Steps current={current} direction="vertical" initial={0}>
           <Step
-            title="Step 1"
             description={current == 0 ? <EasyLevelFirstTaskDescription /> : ""}
           />
           <Step
-            title="Step 2"
             description={current == 1 ? <EasyLevelSecondTaskDescription /> : ""}
           />
         </Steps>
