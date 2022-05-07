@@ -14,6 +14,7 @@ import {
 import $ from "jquery";
 import EasyLevelSteps from "../components/Steps";
 import { Steps } from "intro.js-react";
+import { useHotkeys } from 'react-hotkeys-hook';
 
 function getRandomNumber(max) {
     return Math.floor(Math.random() * max);
@@ -75,10 +76,10 @@ function EasyLevelGame() {
     const survivalManualText = $(".survival-manual").text();
     // add auto scroll to bottom
     const messagesEndRef = React.useRef(null);
-
     const scrollToBottom = () => {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     };
+    useHotkeys('ctrl+enter', () => $(".send-btn").trigger("click"));
     const [sendPacketVisible, setSendPacketVisible] = React.useState(false);
     let clientPacketConfig = {
         sourcePort: clientPort,

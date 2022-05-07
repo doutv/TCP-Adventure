@@ -7,6 +7,8 @@ import { MediumLevelManual } from "../components/text"
 import { Modal } from "antd";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import '../components/StateHeader.css'
+import { useHotkeys } from 'react-hotkeys-hook';
+import $ from "jquery";
 
 const prettyPrintState = (state) => {
     console.log({
@@ -66,6 +68,7 @@ const MediumLevelGame = () => {
         service.start();
         service.send({ type: "PASSIVE_OPEN" });
     }, []);
+    useHotkeys('ctrl+enter', () => $(".send-btn").trigger("click"));
 
     return (
         <div className="medium-level-game">
