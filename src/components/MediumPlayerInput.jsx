@@ -60,10 +60,19 @@ const MediumPlayerInput = (props) => {
         // AI receive and send
         service.send(event);
         const serverState = service.getSnapshot().value;
-        if (serviceLastStateRef.current === "SYN_RCVD" && serverState === "ESTABLISHED") {
+        if (data) {
+            let respondData = "";
+            switch (data) {
+                case "How can I contact you?":
+                    respondData = "Remember my port number is 3280, and I always send segments through your port 12345.";
+                    break;
+                case "If I receive other segments, what should I do?":
+                    respondData = "You should act as normal and execute OS instructions.";
+                    break;
+            }
             service.send({
                 type: "SEND_DATA",
-                data: "Hello! Remember my port number is 3280, and I always try to send messages to you through your port 12345."
+                data: respondData
             })
         }
         if (serverState === "CLOSE_WAIT") {

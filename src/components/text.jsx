@@ -113,12 +113,16 @@ const EasyLevelSecondTaskDescription = () => {
 const MediumLevelManual = () => {
     return (
         <div className="medium-level-manual">
-            <p>
-                You still have a lot of questions in your mind and want to ask the mysterious person.
-            </p>
-            <p>
+            <h3>
                 This time, you should proactively open and close the connection.
-            </p>
+            </h3>
+            <h3>
+                You still have a lot of questions in your mind and want to ask the mysterious person:
+                <ul>
+                    <li>How can I contact you?</li>
+                    <li>If I receive other segments, what should I do?</li>
+                </ul>
+            </h3>
         </div>
     )
 }
