@@ -96,7 +96,7 @@ const SendPacket = (props) => {
                 ACK,
                 FIN,
                 SYN,
-                isClientMes: false,
+                isAIMsg: false,
               },
             ]);
             const tmpTimer = props.timer + 1;

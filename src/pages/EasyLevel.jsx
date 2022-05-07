@@ -90,7 +90,7 @@ function EasyLevelGame() {
         SYN: 1,
         FIN: 0,
         inputDisable: true,
-        isClientMes: true,
+        isAIMsg: true,
     };
     let serverPacketConfig = {
         sourcePort: serverPort,
@@ -101,7 +101,7 @@ function EasyLevelGame() {
         SYN: 1,
         FIN: 0,
         inputDisable: true,
-        isClientMes: true,
+        isAIMsg: true,
     };
     const clientPackConfigs = {
         0: { ...clientPacketConfig },
@@ -286,7 +286,7 @@ function EasyLevelGame() {
                     {historyMes.map((ele) => {
                         return ele.message ? (
                             ele.content
-                        ) : ele.isClientMes ? (
+                        ) : ele.isAIMsg ? (
                             <div
                                 className="client-message"
                                 style={{

@@ -53,7 +53,7 @@ const MediumPlayerInput = (props) => {
                 SYN,
                 RST,
                 data,
-                isClientMes: false,
+                isAIMsg: false,
             },
         ];
 
@@ -73,19 +73,19 @@ const MediumPlayerInput = (props) => {
                     respondData = "You should act as normal and execute OS instructions.";
                     break;
             }
-            service.send({
-                type: "SEND_DATA",
-                data: respondData
-            })
+            if (respondData) {
+                service.send({
+                    type: "SEND_DATA",
+                    data: respondData
+                })
+            }
         }
         if (serverState === "CLOSE_WAIT") {
             service.send({ type: "SEND_FIN" });
         }
         const serverOutputs = getOutputSegmentsFromIdx(service, serviceOutputIdxRef.current);
-        // console.log("snapshot", service.getSnapshot().history.context);
-        // console.log(serverOutput.history.context)
 
-        serverOutputs.forEach(each => each.isClientMes = true);
+        serverOutputs.forEach(each => each.isAIMsg = true);
         if (serverOutputs.length > 0) {
             historyMes = [
                 ...historyMes,

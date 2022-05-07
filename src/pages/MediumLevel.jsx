@@ -81,7 +81,7 @@ const MediumLevelGame = () => {
                     {historyMes.map((ele) => {
                         return ele.message ? (
                             ele.content
-                        ) : ele.isClientMes ? (
+                        ) : ele.isAIMsg ? (
                             <div
                                 className="client-message"
                                 style={{
