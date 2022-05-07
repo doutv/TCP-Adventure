@@ -122,11 +122,31 @@ const MediumLevelManual = () => {
         </div>
     )
 }
+
+const MediumLevelFirstTaskDescription = () => {
+    return (
+        <div className="first-task-description">
+            <h2>Proactively open and close the connection</h2>
+            <h3>Ask questions if you like</h3>
+        </div>
+    );
+}
+
+const MediumLevelSecondTaskDescription = () => {
+    return (
+        <div className="second-task-description">
+            <h2>Reset malicious connections</h2>
+        </div>
+    );
+}
+
 export {
     BackgroundMessage,
     EasyLevelManual,
     SurvivalManual,
     EasyLevelFirstTaskDescription,
     EasyLevelSecondTaskDescription,
-    MediumLevelManual
+    MediumLevelManual,
+    MediumLevelFirstTaskDescription,
+    MediumLevelSecondTaskDescription
 };

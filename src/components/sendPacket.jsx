@@ -104,7 +104,7 @@ const SendPacket = (props) => {
           }
         }}
       >
-        Send (Ctrl+Enter)
+        Send (Enter)
       </Button>
     </div>
   );

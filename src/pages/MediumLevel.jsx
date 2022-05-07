@@ -9,6 +9,7 @@ import { QuestionCircleOutlined } from "@ant-design/icons";
 import '../components/StateHeader.css'
 import { useHotkeys } from 'react-hotkeys-hook';
 import $ from "jquery";
+import { MediumLevelSteps } from "../components/Steps"
 
 const prettyPrintState = (state) => {
     console.log({
@@ -68,7 +69,7 @@ const MediumLevelGame = () => {
         service.start();
         service.send({ type: "PASSIVE_OPEN" });
     }, []);
-    useHotkeys('ctrl+enter', () => $(".send-btn").trigger("click"));
+    useHotkeys('enter', () => $(".send-btn").trigger("click"));
 
     return (
         <div className="medium-level-game">
@@ -109,6 +110,11 @@ const MediumLevelGame = () => {
                     setHistoryMes={setHistoryMes}
                     historyMes={historyMes}
                 />
+                <div className="progress">
+                    <MediumLevelSteps
+                    // current={state <= stateConfig.FlowControlState ? 0 : 1}
+                    />
+                </div>
             </div>
 
 

@@ -12,7 +12,7 @@ import {
     SurvivalManual,
 } from "../components/text";
 import $ from "jquery";
-import EasyLevelSteps from "../components/Steps";
+import { EasyLevelSteps } from "../components/Steps";
 import { Steps } from "intro.js-react";
 import { useHotkeys } from 'react-hotkeys-hook';
 
@@ -79,7 +79,7 @@ function EasyLevelGame() {
     const scrollToBottom = () => {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     };
-    useHotkeys('ctrl+enter', () => $(".send-btn").trigger("click"));
+    useHotkeys('enter', () => $(".send-btn").trigger("click"));
     const [sendPacketVisible, setSendPacketVisible] = React.useState(false);
     let clientPacketConfig = {
         sourcePort: clientPort,
