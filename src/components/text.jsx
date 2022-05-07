@@ -50,31 +50,30 @@ const SurvivalManual = () => {
                 <b>Sequence Number:</b> a counter used to keep track of every byte sent
                 outward by a host, excluding header size.
             </p>
-            Sequence Number = your last TCP segment sequence number + last TCP segment
-            data size{" "}
+            Sequence Number = your last sequence number + last data size{" "}
             <p>
-                If your last TCP segment is with flag SYN=1, then <br></br>
-                Sequence Number = your last sequence number +1
+                If your last TCP segment is with flag SYN=1 or FIN=1, then <br></br>
+                Sequence Number = your last sequence number + 1
             </p>
             <p>
-                <b>Acknowledgment Number:</b> the next sequence number that the sender
-                of the ACK is expecting.
+                <b>Acknowledgment Number:</b> the next expecting sequence number.
             </p>
             <h3>2. Data transmission</h3>
             <p>
-                In this phase, the mysterious person will send you a segment with survival manual data, then try to terminate the connection.
+                In this phase, the mysterious person will send you a segment with survival manual data.
             </p>
             <h3>3. Connection termination</h3>
             <p>
-                TCP uses a cumulative acknowledgment.
+                <b>Cumulative Acknowledgment:</b>
+                <br></br>
                 The receiver sends an acknowledgment segment to tell the sender that all segments before that acknowledgment number are received.
                 If the cumulative acknowledgment is not used, the receiver will send an acknowledgment segment each time receives a segment.
             </p>
             <p>
-                It is also possible to terminate the connection by a 3-way handshake,
+                It is also possible to terminate the connection by a <b>3-way handshake</b>,
                 when host A sends a FIN and host B replies with a FIN & ACK (combining two steps into one) and host A replies with an ACK.
             </p>
-            <Image src={FourWayHandshakeImage} alt="Connection termination" />
+            <Image src={FourWayHandshakeImage} height="250px" alt="Connection termination" />
         </div>
     );
 };
@@ -82,19 +81,14 @@ const SurvivalManual = () => {
 const EasyLevelFirstTaskDescription = () => {
     return (
         <div className="first-task-description">
-            <h2>What should you do next?</h2>
             <h2>Send the second SYN-ACK</h2>
-            <p>Your <b>Source Port</b>, <b>Destination Port</b>, and <b>Sequence Number</b> are automatically generated.</p>
-            <p>
-                You need to complete the <b>Acknowledgement Number</b> and {" "}
-                <b>
-                    Flags: (ACK, SYN, FIN).
-                </b>{" "}
-            </p>
-            <p>
-                You should input the correct answer and send it, or you will get
-                error notifications.
-            </p>
+            <h3>
+                Fill:
+                <br></br>
+                1. Acknowledgement Number
+                <br></br>
+                2. Flags (ACK, SYN, FIN)
+            </h3>
         </div>
     );
 };
@@ -102,24 +96,16 @@ const EasyLevelFirstTaskDescription = () => {
 const EasyLevelSecondTaskDescription = () => {
     return (
         <div className="second-task-description">
-            <h2>What should you do next?</h2>
             <h2>Send the third FIN-ACK</h2>
-            <p>
-                Remember the definition of <b>Sequence Number</b>, <b>Acknowledgement Number</b>, and{" "}
-                <b>Flags (ACK, SYN, FIN)</b> ?
-                <p>Pay attention to what you have lastly received! </p>
-            </p>
-            <p>
-                You should modify the <b>Sequence Number</b>, <b>Acknowledgement Number</b>, and{" "}
-                <b>
-                    Flags (ACK, SYN, FIN).
-                </b>{" "}
-            </p>
-
-            <p>
-                You should input the correct answer and send it, or you will get
-                error notifications.
-            </p>
+            <h3>
+                Fill:
+                <br></br>
+                1. Sequence Number
+                <br></br>
+                2. Acknowledgement Number
+                <br></br>
+                3. Flags (ACK, SYN, FIN)
+            </h3>
         </div>
     );
 };
