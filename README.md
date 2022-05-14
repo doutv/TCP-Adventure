@@ -3,6 +3,8 @@
 
 Welcome to TCP Adventure, The first browser game dedicated to teaching TCP.
 
+![screenshot](public/easy-screenshot.png)
+
 Highlights:
 - Pure front-end website.
 - Intelligent TCP bot.
