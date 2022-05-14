@@ -1,5 +1,5 @@
 # TCP Adventure
-> [PLAY NOW](tcp.huangyongjin.com)
+> [PLAY NOW](https://tcp.huangyongjin.com/)
 
 Welcome to TCP Adventure, The first browser game dedicated to teaching TCP.
 
