@@ -4,12 +4,13 @@ import React from "react";
 import { useInterpret, useSelector } from "@xstate/react";
 import BasePacket from "../components/BasePacket"
 import { MediumLevelManual } from "../components/text"
-import { Modal } from "antd";
+import { Modal, Result } from "antd";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import '../components/StateHeader.css'
 import { useHotkeys } from 'react-hotkeys-hook';
 import $ from "jquery";
 import { MediumLevelSteps } from "../components/Steps"
+import { PlayerStatistics } from "../systems/Rating"
 
 const prettyPrintState = (state) => {
     console.log({
@@ -103,18 +104,37 @@ const MediumLevelGame = () => {
                     })}
                     <div ref={messagesEndRef}></div>
                 </div>
-                <MediumPlayerInput
-                    service={service}
-                    sourcePort={playerPort}
-                    destinationPort={AIPort}
-                    setHistoryMes={setHistoryMes}
-                    historyMes={historyMes}
-                />
+                {(service.getSnapshot().value === "CLOSED" && service.getSnapshot().context.savedSegments.length > 0) ?
+                    (
+                        <div>
+                            <Result
+                                status="success"
+                                title="Well Done! You have successfully complete the TCP job!"
+                                subTitle="Need more challenge? Try a harder level! Hope you have a deeper understanding of TCP!"
+                            />
+                            <PlayerStatistics
+                                historyMes={historyMes}
+                                AISavedSegmentsLength={service.getSnapshot().context.savedSegments.length}
+                            >
+                            </PlayerStatistics>
+                        </div>
+                    )
+                    :
+                    (<MediumPlayerInput
+                        service={service}
+                        sourcePort={playerPort}
+                        destinationPort={AIPort}
+                        setHistoryMes={setHistoryMes}
+                        historyMes={historyMes}
+                    />)
+                }
+
                 <div className="progress">
                     <MediumLevelSteps
                     // current={state <= stateConfig.FlowControlState ? 0 : 1}
                     />
                 </div>
+
             </div>
 
 

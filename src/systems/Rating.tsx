@@ -3,8 +3,8 @@ import { getDataSizeInBytes } from "../AI/MediumTCPStateMachine";
 import { Statistic, Row, Col } from "antd";
 
 const PlayerStatistics = (props) => {
-    const { historyMsgs, AISavedSegmentsLength } = props;
-    const stats = GetPlayerStatistics(historyMsgs, AISavedSegmentsLength);
+    const { historyMes, AISavedSegmentsLength } = props;
+    const stats = GetPlayerStatistics(historyMes, AISavedSegmentsLength);
     return (
         <Row gutter={16}>
             <Col span={12}>
@@ -17,7 +17,7 @@ const PlayerStatistics = (props) => {
                 <Statistic title="Total data bytes sent" value={stats.totalDataSent} />
             </Col>
             <Col span={12}>
-                <Statistic title="Number of error segments sent" value={stats.errorSegmentCnt} loading />
+                <Statistic title="Number of error segments sent" value={stats.errorSegmentCnt} />
             </Col>
         </Row >
     );
