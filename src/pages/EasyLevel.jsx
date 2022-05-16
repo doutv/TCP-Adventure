@@ -79,7 +79,7 @@ function EasyLevelGame() {
     const scrollToBottom = () => {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     };
-    useHotkeys('enter', () => $(".send-btn").trigger("click"));
+    useHotkeys('ctrl+enter', () => $(".send-btn").trigger("click"));
     const [sendPacketVisible, setSendPacketVisible] = React.useState(false);
     let clientPacketConfig = {
         sourcePort: clientPort,

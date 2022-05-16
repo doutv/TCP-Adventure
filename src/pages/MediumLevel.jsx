@@ -70,7 +70,7 @@ const MediumLevelGame = () => {
         service.start();
         service.send({ type: "PASSIVE_OPEN" });
     }, []);
-    useHotkeys('enter', () => $(".send-btn").trigger("click"));
+    useHotkeys('ctrl+enter', () => $(".send-btn").trigger("click"));
 
     return (
         <div className="medium-level-game">
@@ -109,14 +109,16 @@ const MediumLevelGame = () => {
                         <div>
                             <Result
                                 status="success"
-                                title="Well Done! You have successfully complete the TCP job!"
-                                subTitle="Need more challenge? Try a harder level! Hope you have a deeper understanding of TCP!"
+                                title={
+                                    <div>
+                                        Well Done! You have successfully complete a TCP connection!
+                                        <PlayerStatistics
+                                            historyMes={historyMes}
+                                            AISavedSegmentsLength={service.getSnapshot().context.savedSegments.length}
+                                        />
+                                    </div>}
+                                subTitle="Play again to explore more TCP states"
                             />
-                            <PlayerStatistics
-                                historyMes={historyMes}
-                                AISavedSegmentsLength={service.getSnapshot().context.savedSegments.length}
-                            >
-                            </PlayerStatistics>
                         </div>
                     )
                     :

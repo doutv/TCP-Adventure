@@ -1,25 +1,26 @@
 import * as React from "react";
 import { getDataSizeInBytes } from "../AI/MediumTCPStateMachine";
-import { Statistic, Row, Col } from "antd";
+import { Statistic, Row, Col, Card } from "antd";
 
 const PlayerStatistics = (props) => {
     const { historyMes, AISavedSegmentsLength } = props;
     const stats = GetPlayerStatistics(historyMes, AISavedSegmentsLength);
+    const gridStyle = {
+        width: '50%',
+    };
     return (
         <Row gutter={16}>
-            <Col span={12}>
-                <Statistic title="Rating" value={stats.rating} />
+            <Col span={8}></Col>
+            <Col span={8}>
+                <Card >
+                    <Card.Grid style={gridStyle}><Statistic title="Rating" value={stats.rating} /></Card.Grid>
+                    <Card.Grid style={gridStyle}><Statistic title="Number of segments sent" value={stats.segmentsCnt} /></Card.Grid>
+                    <Card.Grid style={gridStyle}><Statistic title="Total data bytes sent" value={stats.totalDataSent} /></Card.Grid>
+                    <Card.Grid style={gridStyle}><Statistic title="Number of error segments sent" value={stats.errorSegmentCnt} /></Card.Grid>
+                </Card>
             </Col>
-            <Col span={12}>
-                <Statistic title="Number of segments sent" value={stats.segmentsCnt} />
-            </Col>
-            <Col span={12}>
-                <Statistic title="Total data bytes sent" value={stats.totalDataSent} />
-            </Col>
-            <Col span={12}>
-                <Statistic title="Number of error segments sent" value={stats.errorSegmentCnt} />
-            </Col>
-        </Row >
+            <Col span={8}></Col>
+        </Row>
     );
 };
 

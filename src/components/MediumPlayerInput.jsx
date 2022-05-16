@@ -101,7 +101,7 @@ const MediumPlayerInput = (props) => {
         <div className="send-packet">
             <BasePacket {...props} showRST showData inputDisable={false} />
             <Button className="send-btn" onClick={playerSend}>
-                Send (Enter)
+                Send (Ctrl+Enter)
             </Button>
         </div>
     );
