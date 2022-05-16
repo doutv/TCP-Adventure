@@ -53,6 +53,39 @@ const Header = (props) => {
     )
 }
 
+const Bottom = (props) => {
+    const { historyMes, setHistoryMes, service } = props.service;
+    const AIState = useSelector(service, (state) => state.value);
+    const AISavedSegmentsLength = service.getSnapshot().context.savedSegments.length;
+    if (AIState === "CLOSED" && AISavedSegmentsLength > 0) {
+        return (
+            <Result
+                status="success"
+                title={
+                    <div>
+                        Well Done! You have successfully complete a TCP connection!
+                        <PlayerStatistics
+                            historyMes={historyMes}
+                            AISavedSegmentsLength={AISavedSegmentsLength}
+                        />
+                    </div>}
+                subTitle="Play again to explore more TCP states"
+            />
+        );
+    }
+    else {
+        return (
+            <MediumPlayerInput
+                service={service}
+                sourcePort={playerPort}
+                destinationPort={AIPort}
+                setHistoryMes={setHistoryMes}
+                historyMes={historyMes}
+            />
+        );
+    }
+}
+
 const MediumLevelGame = () => {
     const service = useInterpret(AIMachine, {}, (state) => {
         prettyPrintState(state);
@@ -71,7 +104,6 @@ const MediumLevelGame = () => {
         service.send({ type: "PASSIVE_OPEN" });
     }, []);
     useHotkeys('ctrl+enter', () => $(".send-btn").trigger("click"));
-
     return (
         <div className="medium-level-game">
             <Header
@@ -104,32 +136,14 @@ const MediumLevelGame = () => {
                     })}
                     <div ref={messagesEndRef}></div>
                 </div>
-                {(service.getSnapshot().value === "CLOSED" && service.getSnapshot().context.savedSegments.length > 0) ?
-                    (
-                        <div>
-                            <Result
-                                status="success"
-                                title={
-                                    <div>
-                                        Well Done! You have successfully complete a TCP connection!
-                                        <PlayerStatistics
-                                            historyMes={historyMes}
-                                            AISavedSegmentsLength={service.getSnapshot().context.savedSegments.length}
-                                        />
-                                    </div>}
-                                subTitle="Play again to explore more TCP states"
-                            />
-                        </div>
-                    )
-                    :
-                    (<MediumPlayerInput
+
+                <div>
+                    <Bottom
                         service={service}
-                        sourcePort={playerPort}
-                        destinationPort={AIPort}
-                        setHistoryMes={setHistoryMes}
                         historyMes={historyMes}
-                    />)
-                }
+                        setHistoryMes={setHistoryMes}
+                    />
+                </div>
 
                 <div className="progress">
                     <MediumLevelSteps
