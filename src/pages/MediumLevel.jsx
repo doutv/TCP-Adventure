@@ -54,7 +54,7 @@ const Header = (props) => {
 }
 
 const Bottom = (props) => {
-    const { historyMes, setHistoryMes, service } = props.service;
+    const { historyMes, setHistoryMes, service } = props;
     const AIState = useSelector(service, (state) => state.value);
     const AISavedSegmentsLength = service.getSnapshot().context.savedSegments.length;
     if (AIState === "CLOSED" && AISavedSegmentsLength > 0) {

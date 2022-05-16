@@ -57,9 +57,9 @@ function GetPlayerStatistics(historyMsgs: HistoryMsg[], AISavedSegmentsLength: n
     let rating: Ratings = "S";
     if (errorSegmentCnt >= 1)
         rating = "A";
-    else if (errorSegmentCnt >= 5)
+    if (errorSegmentCnt >= 5)
         rating = "B";
-    else if (errorSegmentCnt >= 10)
+    if (errorSegmentCnt >= 10)
         rating = "C";
     return {
         rating: rating,
