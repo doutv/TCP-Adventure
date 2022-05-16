@@ -1,7 +1,7 @@
 # TCP Adventure
 > [PLAY NOW](https://tcp.huangyongjin.com/)
 
-Welcome to TCP Adventure, The first browser game dedicated to teaching TCP.
+Welcome to **TCP Adventure**, the first online TCP tutorial game.
 
 ![screenshot](public/easy-screenshot.png)
 
