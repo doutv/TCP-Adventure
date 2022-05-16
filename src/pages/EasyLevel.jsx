@@ -352,6 +352,7 @@ function EasyLevelGame() {
             <div className="progress">
                 <EasyLevelSteps
                     current={state <= stateConfig.FlowControlState ? 0 : 1}
+                    clientPackConfigs={clientPackConfigs}
                 />
             </div>
         </div>

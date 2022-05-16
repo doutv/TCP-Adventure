@@ -93,23 +93,55 @@ const EasyLevelFirstTaskDescription = () => {
     );
 };
 
-const EasyLevelSecondTaskDescription = () => {
+const EasyLevelFirstTaskDescriptionWithAnswer = (props) => {
+    const { clientPackConfigs } = props;
+    const acknowledgmentNumber = clientPackConfigs[0].sequenceNumber + 1;
+    return (
+        <div className="first-task-description">
+            <h2>Send the second SYN-ACK</h2>
+            <h3>
+                Fill:
+                <br></br>
+                1. Acknowledgement Number = {acknowledgmentNumber}, since your next expecting sequence number from the other side is {acknowledgmentNumber - 1}+1.
+                <br></br>
+                2. Flags:
+                <ul>
+                    <li>ACK=1: enable the Acknowledgement Number</li>
+                    <li>SYN=1: try to establish a connection</li>
+                    <li>FIN=0</li>
+                </ul>
+            </h3>
+            <h3>Check Help Message at the top right for more details.</h3>
+        </div>
+    )
+}
+
+const EasyLevelSecondTaskDescriptionWithAnswer = (props) => {
+    const { clientPackConfigs } = props;
+    const sequenceNumber = clientPackConfigs[3].AckNumber;
+    const acknowledgementNumber = clientPackConfigs[3].sequenceNumber + 1;
     return (
         <div className="second-task-description">
             <h2>Send the third FIN-ACK</h2>
             <h3>
                 Fill:
                 <br></br>
-                1. Sequence Number
+                1. Sequence Number = {sequenceNumber}<br></br>
+                since the Acknowledgement Number of the other side is your Sequence Number.
                 <br></br>
-                2. Acknowledgement Number
+                2. Acknowledgement Number = {acknowledgementNumber}
                 <br></br>
-                3. Flags (ACK, SYN, FIN)
+                3. Flags:
+                <ul>
+                    <li>ACK = 1: enable the Acknowledgement Number</li>
+                    <li>SYN = 0: </li>
+                    <li>FIN = 1: try to terminate the connection</li>
+                </ul>
             </h3>
+            <h3>Check Help Message at the top right for more details.</h3>
         </div>
     );
 };
-
 const MediumLevelManual = () => {
     return (
         <div className="medium-level-manual">
@@ -150,7 +182,8 @@ export {
     EasyLevelManual,
     SurvivalManual,
     EasyLevelFirstTaskDescription,
-    EasyLevelSecondTaskDescription,
+    EasyLevelFirstTaskDescriptionWithAnswer,
+    EasyLevelSecondTaskDescriptionWithAnswer,
     MediumLevelManual,
     MediumLevelFirstTaskDescription,
     MediumLevelSecondTaskDescription

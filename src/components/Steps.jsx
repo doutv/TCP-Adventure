@@ -1,8 +1,8 @@
 import { Drawer, Steps, Tooltip } from "antd";
 import React from "react";
 import {
-  EasyLevelFirstTaskDescription,
-  EasyLevelSecondTaskDescription,
+  EasyLevelFirstTaskDescriptionWithAnswer,
+  EasyLevelSecondTaskDescriptionWithAnswer,
   MediumLevelFirstTaskDescription,
   MediumLevelSecondTaskDescription
 } from "./text";
@@ -10,6 +10,7 @@ import { ForwardOutlined } from "@ant-design/icons";
 const { Step } = Steps;
 
 const EasyLevelSteps = (props) => {
+  const { clientPackConfigs } = props;
   const current = props.current ? props.current : 0;
   const [drawer, setDrawer] = React.useState(false);
   return (
@@ -38,13 +39,21 @@ const EasyLevelSteps = (props) => {
         }}
         visible={drawer}
         placement="right"
+        size="large"
       >
         <Steps current={current} direction="vertical" initial={0}>
           <Step
-            description={current == 0 ? <EasyLevelFirstTaskDescription /> : ""}
+            description={current == 0 ?
+              <EasyLevelFirstTaskDescriptionWithAnswer
+                clientPackConfigs={clientPackConfigs}
+              /> : ""
+            }
           />
           <Step
-            description={current == 1 ? <EasyLevelSecondTaskDescription /> : ""}
+            description={current == 1 ?
+              <EasyLevelSecondTaskDescriptionWithAnswer
+                clientPackConfigs={clientPackConfigs}
+              /> : ""}
           />
         </Steps>
       </Drawer>
@@ -76,6 +85,7 @@ const MediumLevelSteps = (props) => {
 
       <Drawer
         title="Missions"
+        size="large"
         onClose={() => {
           setDrawer(false);
         }}
