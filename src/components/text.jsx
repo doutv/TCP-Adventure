@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Divider, Image } from "antd";
 import ThreeWayHandshakeImage from "../img/three-way-handshake.png";
 import FourWayHandshakeImage from "../img/four-way-handshake.png";

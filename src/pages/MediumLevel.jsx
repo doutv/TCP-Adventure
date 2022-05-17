@@ -92,6 +92,7 @@ const MediumLevelGame = () => {
         prettyPrintState(state);
     });
     const [historyMes, setHistoryMes] = React.useState([]);
+    const [health, setHealth] = React.useState(100);
     const messagesEndRef = React.useRef(null);
     const scrollToBottom = () => {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -113,6 +114,8 @@ const MediumLevelGame = () => {
             <HealthBar
                 historyMes={historyMes}
                 service={service}
+                health={health}
+                setHealth={setHealth}
             />
             <div className="container">
                 <div className="info-container">
