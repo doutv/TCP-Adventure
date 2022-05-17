@@ -24,7 +24,7 @@ const sendSegment = (context, event) => {
     if (context.SYN === 1 || context.FIN === 1) {
         newSequenceNumber++;
     }
-    else if (event.hasOwnProperty('data')) {
+    else if (Object.prototype.hasOwnProperty.call(event, 'data')) {
         newSequenceNumber += getDataSizeInBytes(event.data);
         outputSegment["data"] = event.data;
     }
@@ -36,7 +36,7 @@ const sendSegment = (context, event) => {
  * All recvSegments should pass this
  */
 const TCPReceiverBaseGuard = (context, event, ACK = 1, SYN = 0, FIN = 0, RST = 0) => {
-    if (!event.hasOwnProperty("recvSegments") || event.recvSegments.length === 0) {
+    if (!Object.prototype.hasOwnProperty.call(event, "recvSegments") || event.recvSegments.length === 0) {
         return false;
     }
     const recvSegment = event.recvSegments[0];
@@ -59,7 +59,7 @@ const TCPReceiverBaseGuard = (context, event, ACK = 1, SYN = 0, FIN = 0, RST = 0
     if (recvSegment.SYN === 1 || recvSegment.FIN === 1) {
         context.AckNumber = recvSegment.sequenceNumber + 1;
     }
-    else if (recvSegment.hasOwnProperty('data')) {
+    else if (Object.prototype.hasOwnProperty.call(recvSegment, 'data')) {
         context.AckNumber = recvSegment.sequenceNumber + getDataSizeInBytes(recvSegment.data);
     }
     context.savedSegments.push(recvSegment);
@@ -221,7 +221,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                                 },
                                 actions: (context, event) => {
                                     // only reply ACK when receive data segment
-                                    if (event.recvSegments[0].hasOwnProperty("data")) {
+                                    if (Object.prototype.hasOwnProperty.call(event.recvSegments[0], 'data')) {
                                         Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
                                         sendSegment(context, event);
                                     }

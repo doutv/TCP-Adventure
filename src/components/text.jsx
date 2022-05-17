@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import * as React from "react";
 import { Divider, Image } from "antd";
 import ThreeWayHandshakeImage from "../img/three-way-handshake.png";

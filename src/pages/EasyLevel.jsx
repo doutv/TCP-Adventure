@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-key */
 import "./EasyLevel.css";
 import StateHeader from "../components/StateHeader";
 import React from "react";

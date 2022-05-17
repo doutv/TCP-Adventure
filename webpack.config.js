@@ -1,3 +1,4 @@
+/*global module*/
 module.exports = {
     // change to .tsx if necessary
     entry: './src/index.js',
@@ -14,6 +15,14 @@ module.exports = {
             { test: /\.tsx?$/, loader: "ts-loader" },
             // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
             { test: /\.js$/, loader: "source-map-loader" },
+            // {
+            //     test: /\.js$/,
+            //     exclude: /node_modules/,
+            //     loader: 'eslint-loader',
+            //     options: {
+            //         emitWarning: true,
+            //     },
+            // },
         ],
     },
     externals: {
