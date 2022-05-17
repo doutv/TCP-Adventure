@@ -11,6 +11,7 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import $ from "jquery";
 import { MediumLevelSteps } from "../components/Steps"
 import { PlayerStatistics } from "../systems/Rating"
+import { HealthBar } from "../systems/Health"
 
 const prettyPrintState = (state) => {
     console.log({
@@ -107,6 +108,10 @@ const MediumLevelGame = () => {
     return (
         <div className="medium-level-game">
             <Header
+                service={service}
+            />
+            <HealthBar
+                historyMes={historyMes}
                 service={service}
             />
             <div className="container">
