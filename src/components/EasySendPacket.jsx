@@ -31,20 +31,6 @@ const SendPacket = (props) => {
           const SYN = parseInt($(".send-packet #SYN")[0].value);
           const FIN = parseInt($(".send-packet #FIN")[0].value);
           let isSuccess = true;
-          if (sourcePort !== correctCheck.sourcePort) {
-            isSuccess = false;
-            notification.error({
-              message: "Send Packet Error:",
-              description: Error.sourcePortError,
-            });
-          }
-          if (destinationPort !== correctCheck.destinationPort) {
-            isSuccess = false;
-            notification.error({
-              message: "Send Packet Error:",
-              description: Error.destinationPortError,
-            });
-          }
           if (sequenceNumber !== correctCheck.sequenceNumber) {
             isSuccess = false;
             notification.error({

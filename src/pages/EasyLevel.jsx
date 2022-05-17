@@ -318,6 +318,7 @@ function EasyLevelGame() {
                             historyMes={historyMes}
                             setHistoryMes={setHistoryMes}
                             sequenceNumber={INIT_SERVER_SEQ}
+                            state={state}
                             inputDisable={false}
                             timer={timer}
                             setTimer={setTimer}

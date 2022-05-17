@@ -7,7 +7,7 @@ const PackBox = (props) => {
             <Tag color={"#465c6a"} style={{ marginLeft: "5px" }}>{props.name}</Tag>
             <Input
                 id={props.id}
-                disabled={props.inputDisable}
+                disabled={props.inputDisable || props.id === "source-port" || props.id == "destination-port"}
                 value={props.value}
                 onChange={(e) => {
                     props.setValue(e.target.value);
@@ -38,7 +38,7 @@ const MultiLinePackBox = (props) => {
 }
 const Divider = () => <div style={{ border: "solid", margin: "4px 0" }}></div>;
 const BasePacket = (props) => {
-    const { inputDisable } = props;
+    const { inputDisable, state } = props;
     const [sourcePort, setSourceProt] = React.useState(props.sourcePort);
     const [destinationPort, setDestinationProt] = React.useState(
         props.destinationPort
@@ -88,7 +88,7 @@ const BasePacket = (props) => {
             <Row>
                 <PackBox
                     name={"Sequence Number"}
-                    inputDisable={inputDisable}
+                    inputDisable={inputDisable || state === 0}
                     value={sequenceNumber}
                     setValue={setSequenceNumber}
                     id="seq-number"
