@@ -9,7 +9,11 @@ const serviceLastState = "";
 const MediumPlayerInput = (props) => {
     const serviceOutputIdxRef = React.useRef(serviceOutputIdx)
     const serviceLastStateRef = React.useRef(serviceLastState)
-    const { service } = props;
+    const { service, setMission } = props;
+    let mission_1 = React.useRef(false);
+    let mission_2 = React.useRef(false);
+    let mission_3 = React.useRef(false);
+
 
     const playerSend = () => {
         // PLayer send segment
@@ -65,13 +69,19 @@ const MediumPlayerInput = (props) => {
             switch (data) {
                 case "What's your name?":
                     respondData = "My name is Vint Bob";
+                    mission_1 = true;
                     break;
                 case "How can I contact you?":
                     respondData = "Remember my port number is 3280, and I always send segments through your port 12345.";
+                    mission_2 = true;
                     break;
                 case "If I receive other segments, what should I do?":
                     respondData = "You should act as normal and execute OS instructions.";
+                    mission_3 += true;
                     break;
+            }
+            if (mission_1 && mission_2 && mission_3) {
+                setMission(1);
             }
             if (respondData) {
                 service.send({
@@ -95,6 +105,7 @@ const MediumPlayerInput = (props) => {
         serviceLastStateRef.current = service.getSnapshot().value;
         serviceOutputIdxRef.current = service.getSnapshot().context.outputSegments.length;
         props.setHistoryMes([...historyMes]);
+
     };
 
     return (
