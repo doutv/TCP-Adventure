@@ -92,6 +92,7 @@ it('Two Machines talking to each other', async () => {
     expect(getLastSavedSegment(AIService))
         .toEqual(getLastOutputSegment(playerService));
 
+    /* 
     // AI send an old segment to player
     const oldAISend = Object.assign({}, getLastOutputSegment(AIService)); // shallow copy
     oldAISend.data = "Old data, should not be saved";
@@ -103,6 +104,31 @@ it('Two Machines talking to each other', async () => {
     expect(getLastSavedSegment(playerService)).not.toEqual(oldAISend);
     // player should not respond to this old segment
     expect(getLastOutputSegment(playerService)).toEqual(lastPlayerOutput);
+    */
+
+    // Round 3: Medium level auto respond data
+    playerService.send({
+        type: 'SEND_DATA',
+        data: "What's your name?"
+    });
+    AIService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getLastOutputSegment(playerService)]
+    });
+    expect(getLastOutputSegment(AIService).data)
+        .toEqual("My name is Vint Bob");
+    playerService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getLastOutputSegment(AIService)]
+    });
+    expect(getLastSavedSegment(playerService))
+        .toEqual(getLastOutputSegment(AIService));
+    AIService.send({
+        type: 'RECV_SEGMENT',
+        recvSegments: [getLastOutputSegment(playerService)]
+    });
+    expect(getLastSavedSegment(AIService))
+        .toEqual(getLastOutputSegment(playerService));
 
     // Connection termination 4-way handshake
     // player send FIN
@@ -197,17 +223,18 @@ it('Easy Level', () => {
 
     // AI send 1st handshake segment
     service.send({ type: 'ACTIVE_OPEN' });
-    expect(getLastOutputSegment(service)).toEqual({
-        sourcePort: AIPort,
-        destinationPort: playerPort,
-        sequenceNumber: AISequenceNumber++,
-        windowSize: windowSize,
-        AckNumber: 0,
-        ACK: 0,
-        SYN: 1,
-        FIN: 0,
-        RST: 0,
-    });
+    expect(getLastOutputSegment(service)).toEqual(
+        expect.objectContaining({
+            sourcePort: AIPort,
+            destinationPort: playerPort,
+            sequenceNumber: AISequenceNumber++,
+            windowSize: windowSize,
+            AckNumber: 0,
+            ACK: 0,
+            SYN: 1,
+            FIN: 0,
+            RST: 0,
+        }));
 
     // Player send 2nd handshake segment
     let event = {
@@ -227,17 +254,20 @@ it('Easy Level', () => {
     service.send(event);
 
     // AI send 3rd handshake segment
-    expect(getLastOutputSegment(service)).toEqual({
-        sourcePort: AIPort,
-        destinationPort: playerPort,
-        sequenceNumber: AISequenceNumber,
-        windowSize: windowSize,
-        AckNumber: playerSequenceNumber,
-        ACK: 1,
-        SYN: 0,
-        FIN: 0,
-        RST: 0,
-    });
+    expect(getLastOutputSegment(service)).toEqual(
+        expect.objectContaining(
+            {
+                sourcePort: AIPort,
+                destinationPort: playerPort,
+                sequenceNumber: AISequenceNumber,
+                windowSize: windowSize,
+                AckNumber: playerSequenceNumber,
+                ACK: 1,
+                SYN: 0,
+                FIN: 0,
+                RST: 0,
+            })
+    );
 
     // Player send a message to AI
     const message = {
@@ -293,6 +323,7 @@ it('Easy Level', () => {
         SYN: 0,
         FIN: 1,
         RST: 0,
+        data: ""
     })
 
     // ignore 2nd terminal handshake
@@ -323,6 +354,7 @@ it('Easy Level', () => {
         SYN: 0,
         FIN: 0,
         RST: 0,
+        data: "",
     });
 });
 

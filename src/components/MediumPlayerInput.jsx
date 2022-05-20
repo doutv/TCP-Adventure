@@ -60,26 +60,6 @@ const MediumPlayerInput = (props) => {
         // AI receive and send
         service.send(event);
         const serverState = service.getSnapshot().value;
-        if (data) {
-            let respondData = "";
-            switch (data) {
-                case "What's your name?":
-                    respondData = "My name is Vint Bob";
-                    break;
-                case "How can I contact you?":
-                    respondData = "Remember my port number is 3280, and I always send segments through your port 12345.";
-                    break;
-                case "If I receive other segments, what should I do?":
-                    respondData = "You should act as normal and execute OS instructions.";
-                    break;
-            }
-            if (respondData) {
-                service.send({
-                    type: "SEND_DATA",
-                    data: respondData
-                })
-            }
-        }
         if (serverState === "CLOSE_WAIT") {
             service.send({ type: "SEND_FIN" });
         }

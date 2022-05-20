@@ -7,7 +7,7 @@ function getDataSizeInBytes(data) {
 /** 
  * Send segment by updating context
 */
-const sendSegment = (context, event) => {
+const sendSegment = (context, data = "") => {
     const oldSequenceNumber = context.sequenceNumber;
     let outputSegment = {
         sourcePort: context.sourcePort,
@@ -24,10 +24,8 @@ const sendSegment = (context, event) => {
     if (context.SYN === 1 || context.FIN === 1) {
         newSequenceNumber++;
     }
-    else if (Object.prototype.hasOwnProperty.call(event, 'data')) {
-        newSequenceNumber += getDataSizeInBytes(event.data);
-        outputSegment["data"] = event.data;
-    }
+    newSequenceNumber += getDataSizeInBytes(data);
+    outputSegment["data"] = data;
     context.sequenceNumber = newSequenceNumber;
     context.outputSegments.push(outputSegment);
 }
@@ -65,6 +63,23 @@ const TCPReceiverBaseGuard = (context, event, ACK = 1, SYN = 0, FIN = 0, RST = 0
     context.savedSegments.push(recvSegment);
     return true;
 };
+
+const autoRespond = (event) => {
+    let respondData = "";
+    switch (event.recvSegments[0].data) {
+        case "What's your name?":
+            respondData = "My name is Vint Bob";
+            break;
+        case "How can I contact you?":
+            respondData = "Remember my port number is 3280, and I always send segments through your port 12345.";
+            break;
+        case "If I receive other segments, what should I do?":
+            respondData = "You should act as normal and execute OS instructions.";
+            break;
+        default:
+    }
+    return respondData;
+}
 
 function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, payload, MSL = 100, TIMEOUT = 30000) {
     return createMachine(
@@ -109,7 +124,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                             actions: (context, event) => {
                                 // send 1st handshake
                                 Object.assign(context, { ACK: 0, SYN: 1, FIN: 0 });
-                                sendSegment(context, event);
+                                sendSegment(context);
                             }
                         },
                         PASSIVE_OPEN: {
@@ -137,7 +152,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                             },
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
-                                sendSegment(context, event);
+                                sendSegment(context);
                             }
                         },
                         RECV_SYN_SEND_SYN_ACK: {
@@ -157,14 +172,14 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                             },
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 1, SYN: 1, FIN: 0 });
-                                sendSegment(context, event);
+                                sendSegment(context);
                             }
                         },
                         SEND_SYN: {
                             target: 'SYN_SENT',
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 0, SYN: 1, FIN: 0 });
-                                sendSegment(context, event);
+                                sendSegment(context);
                             }
                         }
                     },
@@ -179,7 +194,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                             target: 'CLOSED',
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 0, SYN: 0, FIN: 0, RST: 1 });
-                                sendSegment(context, event);
+                                sendSegment(context);
                             }
                         }
                     ],
@@ -204,7 +219,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                             target: 'FIN_WAIT_1',
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 1, SYN: 0, FIN: 1 });
-                                sendSegment(context, event);
+                                sendSegment(context);
                             }
                         }
                     }
@@ -223,7 +238,8 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                                     // only reply ACK when receive data segment
                                     if (Object.prototype.hasOwnProperty.call(event.recvSegments[0], 'data')) {
                                         Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
-                                        sendSegment(context, event);
+                                        const data = autoRespond(event);
+                                        sendSegment(context, data);
                                     }
                                 },
                             },
@@ -235,7 +251,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                                 },
                                 actions: (context, event) => {
                                     Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
-                                    sendSegment(context, event);
+                                    sendSegment(context);
                                 },
                             }
                         ],
@@ -243,14 +259,14 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                             internal: true,
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
-                                sendSegment(context, event);
+                                sendSegment(context, event.data);
                             }
                         },
                         SEND_FIN: {
                             target: 'FIN_WAIT_1',
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 1, SYN: 0, FIN: 1 });
-                                sendSegment(context, event);
+                                sendSegment(context);
                             }
                         },
                     }
@@ -265,7 +281,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                                 },
                                 actions: (context, event) => {
                                     Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
-                                    sendSegment(context, event);
+                                    sendSegment(context);
                                 }
                             },
                             {
@@ -297,7 +313,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                                 },
                                 actions: (context, event) => {
                                     Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
-                                    sendSegment(context, event);
+                                    sendSegment(context);
                                 }
                             },
                             {
@@ -308,7 +324,7 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                                 },
                                 actions: (context, event) => {
                                     Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
-                                    sendSegment(context, event);
+                                    sendSegment(context);
                                 }
                             }
                         ]
@@ -336,14 +352,14 @@ function createTCPStateMachine(sourcePort, destinationPort, initSequenceNumber, 
                             target: 'LAST_ACK',
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 1, SYN: 0, FIN: 1 });
-                                sendSegment(context, event);
+                                sendSegment(context);
                             }
                         },
                         SEND_DATA: {
                             internal: true,
                             actions: (context, event) => {
                                 Object.assign(context, { ACK: 1, SYN: 0, FIN: 0 });
-                                sendSegment(context, event);
+                                sendSegment(context, event.data);
                             }
                         },
                         RECV_SEGMENT: {
