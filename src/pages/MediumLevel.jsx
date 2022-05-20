@@ -4,7 +4,7 @@ import React from "react";
 import { useInterpret, useSelector } from "@xstate/react";
 import BasePacket from "../components/BasePacket"
 import { MediumLevelManual } from "../components/text"
-import { message, Modal, Result } from "antd";
+import { Modal, Result } from "antd";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import '../components/StateHeader.css'
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -28,7 +28,7 @@ const getRandomNumber = (max) => Math.floor(Math.random() * max);
 const AIPort = 3280;
 const playerPort = 12345;
 const AISequenceNumber = getRandomNumber(1e6);
-const AIMachine = createTCPStateMachine(AIPort, playerPort, AISequenceNumber, "", 1e6, 1e6);
+const AIMachine = createTCPStateMachine(AIPort, playerPort, AISequenceNumber, "", 1e10, 1e10);
 
 const Header = (props) => {
     const service = props.service;
@@ -55,7 +55,7 @@ const Header = (props) => {
 }
 
 const Bottom = (props) => {
-    const { historyMes, setHistoryMes, service, setMission } = props;
+    const { historyMes, setHistoryMes, service, setMission, health } = props;
     const AIState = useSelector(service, (state) => state.value);
     const AISavedSegmentsLength = service.getSnapshot().context.savedSegments.length;
     if (AIState === "CLOSED" && AISavedSegmentsLength > 0) {
@@ -71,6 +71,22 @@ const Bottom = (props) => {
                         />
                     </div>}
                 subTitle="Play again to explore more TCP states"
+            />
+        );
+    }
+    else if (health <= 0) {
+        return (
+            <Result
+                status="error"
+                title={
+                    <div>
+                        Game Over! You have sent too much wrong segments
+                        <PlayerStatistics
+                            historyMes={historyMes}
+                            AISavedSegmentsLength={AISavedSegmentsLength}
+                        />
+                    </div>}
+                subTitle="Play again to pass this level"
             />
         );
     }
@@ -159,12 +175,13 @@ const MediumLevelGame = () => {
                         setMission={setMission}
                         historyMes={historyMes}
                         setHistoryMes={setHistoryMes}
+                        health={health}
                     />
                 </div>
 
                 <div className="progress">
                     <MediumLevelSteps
-                    current={mission}
+                        current={mission}
                     />
                 </div>
 

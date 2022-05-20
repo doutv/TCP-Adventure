@@ -7,13 +7,21 @@ const reward = 5;
 
 const HealthBar = (props) => {
     const { historyMes, service, health, setHealth } = props;
-
+    const setHealthBounded = (health) => {
+        if (health <= 0)
+            health = 0;
+        if (health >= 100)
+            health = 100;
+        setHealth(health);
+    }
+    // TODO: Only update health when historyMes changes
+    // Below code depends on : Every time historyMes will update 2 msgs
     React.useEffect(() => {
         if (historyMes.length === 0)
             return;
         const AILastSavedSegment = service.getSnapshot().context.savedSegments[service.getSnapshot().context.savedSegments.length - 1];
         if (!AILastSavedSegment) {
-            setHealth(health - penalty);
+            setHealthBounded(health - penalty);
             return;
         }
         let playerMsgs = historyMes.filter(msg => msg.isAIMsg === false);
@@ -23,16 +31,15 @@ const HealthBar = (props) => {
         // last 2 player messages are the same
         // _.isEqual() to check 2 objects equality
         if (playerMsgs.length >= 2 && _.isEqual(playerMsgs[playerMsgs.length - 1], playerMsgs[playerMsgs.length - 2])) {
-            setHealth(health - penalty);
+            setHealthBounded(health - penalty);
             return;
         }
 
         if (_.isEqual(AILastSavedSegment, lastMsg))
-            setHealth(health + reward);
+            setHealthBounded(health + reward);
         else
-            setHealth(health - penalty);
-
-    }, [historyMes])
+            setHealthBounded(health - penalty);
+    }, [historyMes]);
 
     return (
         <div>
