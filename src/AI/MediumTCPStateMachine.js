@@ -66,7 +66,7 @@ const TCPReceiverBaseGuard = (context, event, ACK = 1, SYN = 0, FIN = 0, RST = 0
 
 const autoRespond = (event) => {
     let respondData = "";
-    switch (event.recvSegments[0].data) {
+    switch (event.recvSegments[0].data.trim()) {
         case "What's your name?":
             respondData = "My name is Vint Bob";
             break;
