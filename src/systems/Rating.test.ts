@@ -199,7 +199,7 @@ it('Medium Level Player Rating', () => {
     ]
     const stats = GetPlayerStatistics(historyMsgs, 6);
     console.log(stats);
-    expect(stats.rating).toEqual("A");
+    expect(stats.rating).toEqual("B");
     expect(stats.segmentsCnt).toEqual(9);
     expect(stats.errorSegmentCnt).toEqual(3);
     expect(stats.totalDataSent).toEqual(39)

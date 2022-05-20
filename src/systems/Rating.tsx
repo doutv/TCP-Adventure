@@ -46,7 +46,6 @@ interface PlayStatistics {
 }
 function GetPlayerStatistics(historyMsgs: HistoryMsg[], AISavedSegmentsLength: number): PlayStatistics {
     const playerMsgs = historyMsgs.filter(msg => msg.isAIMsg === false);
-    const AIMsgs = historyMsgs.filter(msg => msg.isAIMsg === true);
     const SegmentsCnt = playerMsgs.length;
     let errorSegmentCnt = playerMsgs.length - AISavedSegmentsLength
     let totalDataSent = 0;
@@ -55,11 +54,14 @@ function GetPlayerStatistics(historyMsgs: HistoryMsg[], AISavedSegmentsLength: n
     });
     // Use a backend to calculate the rating by comparing player performances
     let rating: Ratings = "S";
-    if (errorSegmentCnt >= 1)
-        rating = "A";
-    if (errorSegmentCnt >= 5)
+    const errorPercent = errorSegmentCnt / SegmentsCnt;
+    if (errorPercent <= 0.1)
+        rating = "S";
+    else if (errorPercent <= 0.3)
+        rating = "A"
+    else if (errorPercent <= 0.5)
         rating = "B";
-    if (errorSegmentCnt >= 10)
+    else
         rating = "C";
     return {
         rating: rating,
