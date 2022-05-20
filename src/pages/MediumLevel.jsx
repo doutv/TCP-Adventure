@@ -4,7 +4,7 @@ import React from "react";
 import { useInterpret, useSelector } from "@xstate/react";
 import BasePacket from "../components/BasePacket"
 import { MediumLevelManual } from "../components/text"
-import { Modal, Result } from "antd";
+import { message, Modal, Result } from "antd";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import '../components/StateHeader.css'
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -55,7 +55,7 @@ const Header = (props) => {
 }
 
 const Bottom = (props) => {
-    const { historyMes, setHistoryMes, service } = props;
+    const { historyMes, setHistoryMes, service, setMission } = props;
     const AIState = useSelector(service, (state) => state.value);
     const AISavedSegmentsLength = service.getSnapshot().context.savedSegments.length;
     if (AIState === "CLOSED" && AISavedSegmentsLength > 0) {
@@ -82,6 +82,7 @@ const Bottom = (props) => {
                 destinationPort={AIPort}
                 setHistoryMes={setHistoryMes}
                 historyMes={historyMes}
+                setMission={setMission}
             />
         );
     }
@@ -97,10 +98,17 @@ const MediumLevelGame = () => {
     const scrollToBottom = () => {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     };
+    const [mission, setMission] = React.useState(0);
     React.useEffect(() => {
         scrollToBottom();
     }, [historyMes]);
-
+    // React.useEffect(() => {
+    //     if (mission == 1) {
+    //         message.success({
+    //             content: "Good Job!"
+    //         })
+    //     }
+    // }, [mission])
     React.useEffect(() => {
         service.start();
         service.send({ type: "PASSIVE_OPEN" });
@@ -148,6 +156,7 @@ const MediumLevelGame = () => {
                 <div>
                     <Bottom
                         service={service}
+                        setMission={setMission}
                         historyMes={historyMes}
                         setHistoryMes={setHistoryMes}
                     />
@@ -155,7 +164,7 @@ const MediumLevelGame = () => {
 
                 <div className="progress">
                     <MediumLevelSteps
-                    // current={state <= stateConfig.FlowControlState ? 0 : 1}
+                    current={mission}
                     />
                 </div>
 

@@ -9,7 +9,11 @@ const serviceLastState = "";
 const MediumPlayerInput = (props) => {
     const serviceOutputIdxRef = React.useRef(serviceOutputIdx)
     const serviceLastStateRef = React.useRef(serviceLastState)
-    const { service } = props;
+    const { service, setMission } = props;
+    let mission_1 = React.useRef(false);
+    let mission_2 = React.useRef(false);
+    let mission_3 = React.useRef(false);
+
 
     const playerSend = () => {
         // PLayer send segment
@@ -75,6 +79,7 @@ const MediumPlayerInput = (props) => {
         serviceLastStateRef.current = service.getSnapshot().value;
         serviceOutputIdxRef.current = service.getSnapshot().context.outputSegments.length;
         props.setHistoryMes([...historyMes]);
+
     };
 
     return (

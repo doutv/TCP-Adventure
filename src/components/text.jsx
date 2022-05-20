@@ -166,6 +166,8 @@ const MediumLevelFirstTaskDescription = () => {
     return (
         <div className="first-task-description">
             <h2>Proactively open and close the connection</h2>
+            <div>You should send the <mark>first handshake packet!</mark></div>
+            <div>Set <mark>SYN = 1</mark>, you can randomly initialize `sequenceNumber`</div>
             <h3>Ask questions if you like</h3>
         </div>
     );
